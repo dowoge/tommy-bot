@@ -1,6 +1,7 @@
 local discordia=require('discordia')
 discordia.extensions()
 local commands={command_list={}}
+_G.init=false
 setmetatable(commands.command_list,{__index=function(self,index)
     for i,v in pairs(self) do
         for i2,v2 in pairs(v.alias) do
@@ -28,6 +29,7 @@ function commands:Get(name)
 end
 function commands:INIT()
     -- self.command_list={}
+    _G.init=true
     for file in io.popen([[dir "./src/modules/commands" /b]]):lines() do require('./commands/'..file) end
     print('commands done')
 end
