@@ -1,0 +1,1 @@
+.\exes\lit.exe install SinisterRectus/discordia
