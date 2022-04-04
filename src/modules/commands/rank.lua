@@ -35,7 +35,7 @@ commands:Add('rank',{},'rank <username|mention|"me"> <game> <style>', function(t
     'Rank: '..rank_string..'\n'..
     'Skill: '..skill..'\n'..
     'Placement: '..rank.Placement..'\n'..
-    'State '..API.STATES[sn_info.State]..'\n'..
+    'State: '..API.STATES[sn_info.State]..'\n'..
     '```'
     message:reply(formatted_message)
 end)
