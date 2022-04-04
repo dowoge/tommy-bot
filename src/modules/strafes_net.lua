@@ -1,8 +1,11 @@
 local http_request = require('./http.lua')
 local API = {}
 local API_KEY = require('./apikey.lua')
-local API_URL = 'https://api.strafes.net/v1/'
 local API_HEADER = { {'Content-Type','application/json'}, { 'api-key', API_KEY } }
+local STRAFESNET_API_URL = 'https://api.strafes.net/v1/'
+local ROVER_API_URL = 'https://verify.eryn.io/api/'
+local ROBLOX_API_URL = 'https://users.roblox.com/v1/'
+local ROBLOX_API_URL2 = 'https://api.roblox.com/'
 
 local t=tostring
 local r=function(n,nd) return tonumber(string.format('%.' .. (nd or 0) .. 'f', n)) end
@@ -13,6 +16,27 @@ local RANKS={'New (1)','Newb (2)','Bad (3)','Okay (4)','Not Bad (5)','Decent (6)
 local STYLES_LIST={'Autohop','Scroll','Sideways','Half-Sideways','W-Only','A-Only','Backwards',}
 local STYLES={AUTOHOP=1,SCROLL=2,SIDEWAYS=3,HALFSIDEWAYS=4,WONLY=5,AONLY=6,BACKWARDS=7}
 
+setmetatable(STYLES,{__index=function(self,i)
+    if i=='a' then i='auto'elseif i=='hsw'then i='half'elseif i=='s'then i='scroll'elseif i=='sw'then i='side'elseif i=='bw'then i='back'end
+    for ix,v in pairs(self) do
+        if string.sub(ix:lower(),1,#i):find(i:lower()) then
+            return self[ix]
+        end
+    end
+end})
+setmetatable(GAMES,{__index=function(self,i)
+    for ix,v in pairs(self) do
+        if string.sub(tostring(ix):lower(),1,#i):find(i:lower()) then
+            return self[ix]
+        end
+    end
+end})
+
+API.GAMES=GAMES
+API.STYLES=STYLES
+API.STYLES_LIST=STYLES_LIST
+API.STATES=STATES
+
 -- insyri make this BTW
 -- use as local err, res = parseToURLArgs(), thanks golang for this idea 
 function parseToURLArgs(tb) function Err(err) return err, nil end function Ok(res) return nil, res end if not tb then return Err('got nothing') end if type(tb) ~= 'table' then return Err('expected table, got '..type(tb)) end local str = '?' local index = 1 for key, value in pairs(tb) do if index == 1 then str = str..key..'='..t(value) else str = str..'&'..key..'='..t(value) end index = index + 1 end return Ok(str) end
@@ -20,19 +44,23 @@ function parseToURLArgs(tb) function Err(err) return err, nil end function Ok(re
 function formatHelper(time, digits) local time = tostring(time)while #time < digits do time = '0'..time end return time end
 function formatTime(time) if time > 86400000 then return '>1 day' else local millis = formatHelper(time % 1000, 3) local seconds = formatHelper(r(time / 1000) % 60, 2) local minutes = formatHelper(r(time / (1000 * 60)) % 60, 2) local hours = formatHelper(r(time / (1000 * 60 * 60)) % 24, 2) if hours == '00' then return minutes..':'..seconds..'.'..millis else return hours..':'..minutes..':'..seconds end end end
 
-function formatRank(n) return RANKS[1+math.floor(n*19)] end
-function formatSkill(n) return r(n*100,3)..'%' end
+-- [[ STRAFESNET API ]] --
+
+-- Get rank string from rank point
+function API:FormatRank(n) return RANKS[1+math.floor(n*19)] end
+-- Get skill percentage from skill point
+function API:FormatSkill(n) return r(n*100,3)..'%' end
 
 -- Time from id.
 function API:GetTime(ID)
     if not ID then return 'empty id' end
-    local response = http_request('GET', API_URL..'time/'..ID, API_HEADER)
+    local response = http_request('GET', STRAFESNET_API_URL..'time/'..ID, API_HEADER)
     return response
 end
 -- Time rank from id.
 function API:GetTimeRank(MAP_ID)
     if not MAP_ID then return 'empty id' end
-    local response = http_request('GET', API_URL..'time/'..MAP_ID..'/rank', API_HEADER)
+    local response = http_request('GET', STRAFESNET_API_URL..'time/'..MAP_ID..'/rank', API_HEADER)
     return response
 end
 -- 10 recent world records.
@@ -40,7 +68,7 @@ function API:GetRecentWrs(STYLE_ID, GAME_ID, WHITELIST_FILTER)
     if not STYLE_ID or not GAME_ID then return 'empty id' end
     local err, res = parseToURLArgs({style=STYLE_ID, game=GAME_ID, whitelist=WHITELIST_FILTER})
     if err then return err end
-    local response = http_request('GET', API_URL..'time/recent/wr'..res, API_HEADER)
+    local response = http_request('GET', STRAFESNET_API_URL..'time/recent/wr'..res, API_HEADER)
     return response
 end
 -- Time by map id. Sorted in ascending order.
@@ -48,7 +76,7 @@ function API:GetMapTimes(MAP_ID, STYLE_ID, PAGE)
     if not MAP_ID then return 'empty id' end
     local err, res = parseToURLArgs({style=STYLE_ID, page=PAGE})
     if err then return err end
-    local response = http_request('GET', API_URL..'time/map/'..MAP_ID..res, API_HEADER)
+    local response = http_request('GET', STRAFESNET_API_URL..'time/map/'..MAP_ID..res, API_HEADER)
     return response
 end
 -- Get WR of map.
@@ -56,7 +84,7 @@ function API:GetMapWr(MAP_ID, STYLE_ID)
     if not MAP_ID or not STYLE_ID then return 'empty id' end
     local err, res = parseToURLArgs({style=STYLE_ID})
     if err then return err end
-    local response = http_request('GET', API_URL..'time/map/'..MAP_ID..'/wr'..res, API_HEADER)
+    local response = http_request('GET', STRAFESNET_API_URL..'time/map/'..MAP_ID..'/wr'..res, API_HEADER)
     return response
 end
 -- Time by user id.
@@ -64,45 +92,78 @@ function API:GetUserTimes(USER_ID, MAP_ID, STYLE_ID, GAME_ID, PAGE)
     if not USER_ID then return 'empty id' end
     local err, res = parseToURLArgs({map=MAP_ID, style=STYLE_ID, game=GAME_ID, page=PAGE})
     if err then return err end
-    local response = http_request('GET', API_URL..'time/user/'..USER_ID..res , API_HEADER)
+    local response = http_request('GET', STRAFESNET_API_URL..'time/user/'..USER_ID..res , API_HEADER)
     return response
 end
 -- World records by user id.
 function API:GetUserWrs(USER_ID,GAME_ID,STYLE_ID)
     if not USER_ID or not GAME_ID or not STYLE_ID then return 'empty id' end
-    local response = http_request('GET', API_URL..'time/user/'..USER_ID..'/wr?game='..GAME_ID..'&style='..STYLE_ID, API_HEADER)
+    local err, res = parseToURLArgs({game=GAME_ID, style=STYLE_ID})
+    if err then return err end
+    local response = http_request('GET', STRAFESNET_API_URL..'time/user/'..USER_ID..'/wr'..res, API_HEADER)
     return response
 end
 -- User from id.
 function API:GetUser(USER_ID)
     if not USER_ID then return 'empty id' end
-    local response = http_request('GET', API_URL..'user/'..USER_ID, API_HEADER)
+    local response = http_request('GET', STRAFESNET_API_URL..'user/'..USER_ID, API_HEADER)
     return response
 end
 -- Top ranked players, paged at 50 per page.
 function API:GetRanks(STYLE_ID,GAME_ID,PAGE)
     if not STYLE_ID or not GAME_ID then return 'empty id' end
-    local response = http_request('GET', API_URL..'rank?style='..STYLE_ID..'&game='..GAME_ID..(PAGE and '&page='..PAGE or ''), API_HEADER)
+    local err, res = parseToURLArgs({style=STYLE_ID, game=GAME_ID, page=PAGE})
+    if err then return err end
+    local response = http_request('GET', STRAFESNET_API_URL..'rank'..res, API_HEADER)
     return response
 end
 -- Get rank of user by their id.
-function API:GetRank(USER_ID,STYLE_ID,GAME_ID)
+function API:GetRank(USER_ID,GAME_ID,STYLE_ID)
     if not USER_ID or not STYLE_ID or not GAME_ID then return 'empty id' end
-    local response = http_request('GET', API_URL..'rank/'..USER_ID..'?style='..STYLE_ID..'&game='..GAME_ID, API_HEADER)
+    local err, res = parseToURLArgs({style=STYLE_ID, game=GAME_ID})
+    if err then return err end
+    local response = http_request('GET', STRAFESNET_API_URL..'rank/'..USER_ID..res, API_HEADER)
     return response
 end
 -- Get list of maps.
 function API:GetMaps(GAME_ID,PAGE)
     if not GAME_ID then return 'empty id' end
-    local response = http_request('GET', API_URL..'map?game='..GAME_ID..(PAGE and '&page='..PAGE or ''), API_HEADER)
+    local err, res = parseToURLArgs({game=GAME_ID, page=PAGE})
+    if err then return err end
+    local response = http_request('GET', STRAFESNET_API_URL..'map'..res, API_HEADER)
     return response
 end
 -- Get map by ID.
 function API:GetMap(MAP_ID)
     if not MAP_ID then return 'empty id' end
-    local response = http_request('GET', API_URL..'map/'..MAP_ID, API_HEADER)
+    local response = http_request('GET', STRAFESNET_API_URL..'map/'..MAP_ID, API_HEADER)
     return response
 end
 
-local rank = API:GetRank('36332018', STYLES.AUTOHOP, GAMES.SURF)
-print(formatRank(rank.Rank),formatSkill(rank.Skill))
+-- [[ ROBLOX / ROVER AND OTHER APIs ]] --
+
+function API:GetRobloxInfoFromUserId(USER_ID)
+    if not USER_ID then return 'empty id' end
+    local response = http_request('GET', ROBLOX_API_URL..'users/'..USER_ID, API_HEADER)
+    return response
+end
+
+function API:GetRobloxInfoFromUsername(USERNAME)
+    if not USERNAME then return 'empty id' end
+    local err, res = parseToURLArgs({username=USERNAME})
+    if err then return err end
+    local response = http_request('GET', ROBLOX_API_URL2..'users/get-by-username'..res, API_HEADER)
+    if not response.Id then return 'no user found' end
+    local response2 = http_request('GET', ROBLOX_API_URL..'users/'..response.Id, API_HEADER)
+    return response2
+end
+
+function API:GetRobloxInfoFromDiscordId(DISCORD_ID)
+    if not DISCORD_ID then return 'empty id' end
+    local response = http_request('GET', ROVER_API_URL..'user/'..DISCORD_ID, API_HEADER)
+    if not response.robloxId and response.error then return response.error end
+    local response2 = http_request('GET', ROBLOX_API_URL..'users/'..response.robloxId, API_HEADER)
+    return response2
+end
+
+return API

@@ -212,6 +212,8 @@ local token = require('./modules/token.lua')
 local commands=require('./modules/commands.lua')
 local prefix = ','
 local client = discordia.Client()
+_G.client = client
+
 discordia.extensions()
 
 client:on('ready',function()
@@ -247,7 +249,7 @@ function parseMentions(message)
         if v:match('<@![0-9]+>') then
             local id=v:match('<@!([0-9]+)>')
             if usersMentioned[id] then
-                msgSplit[i]=usersMentioned[id].name
+                msgSplit[i]=usersMentioned[id].mentionString
             end
         end
     end
