@@ -12,7 +12,6 @@ local request=function(method,url,headers,params)
     end
     local remaining = tonumber(rheaders['RateLimit-Remaining'])
     local reset = tonumber(rheaders['RateLimit-Reset'])
-    print('remaining',remaining,'reset',reset)
     if remaining and reset then
         local t = remaining==0 and reset or .38
         wait(t)

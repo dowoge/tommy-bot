@@ -3,7 +3,7 @@ local API=require('./../strafes_net.lua')
 local commands=require('./../commands.lua')
 function sleep(n) local t = os.clock() while os.clock()-t <= n do end end
 discordia.extensions()
-commands:Add('skill',{},'calculate skill from placement', function(t)
+commands:Add('skill',{},'skill <username|mention|"me"> <game> <style>', function(t)
     local args=t.args
     local message=t.message
     if #args<3 then return message:reply('invalid arguments') end
@@ -32,9 +32,7 @@ commands:Add('skill',{},'calculate skill from placement', function(t)
     local sn_info = API:GetUser(user.id)
     if not sn_info.ID then return message:reply('```No data with StrafesNET is associated with that user.```') end
     print('user:',user.id)
-    print('locked bot for this command')
     _G.locked = true
-    print('getting times')
     local times = {}
     local res,rheaders = API:GetUserTimes(user.id,nil,style,game)
     if #res~=0 then
@@ -75,7 +73,6 @@ commands:Add('skill',{},'calculate skill from placement', function(t)
         local file=io.open(txt,'w+')
         file:write(msg)
         file:close()
-        print('h')
         message:reply({
             file=txt,
             reference={

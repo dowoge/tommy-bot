@@ -42,8 +42,9 @@ API.STATES=STATES
 -- use as local err, res = parseToURLArgs(), thanks golang for this idea
 function parseToURLArgs(tb) function Err(err) return err, nil end function Ok(res) return nil, res end if not tb then return Err('got nothing') end if type(tb) ~= 'table' then return Err('expected table, got '..type(tb)) end local str = '?' local index = 1 for key, value in pairs(tb) do if index == 1 then str = str..key..'='..t(value) else str = str..'&'..key..'='..t(value) end index = index + 1 end return Ok(str) end
 -- fiveman made these (converted to lua from python)
-function formatHelper(time, digits) local time = tostring(time)while #time < digits do time = '0'..time end return time end
-function formatTime(time) if time > 86400000 then return '>1 day' else local millis = formatHelper(time % 1000, 3) local seconds = formatHelper(r(time / 1000) % 60, 2) local minutes = formatHelper(r(time / (1000 * 60)) % 60, 2) local hours = formatHelper(r(time / (1000 * 60 * 60)) % 24, 2) if hours == '00' then return minutes..':'..seconds..'.'..millis else return hours..':'..minutes..':'..seconds end end end
+function format_helper(a,b)a=tostring(a)while#a<b do a='0'..a end;return a end
+function formatTime(a)if a>86400000 then return'>1 day'end;local c=format_helper(a%1000,3)local d=format_helper(math.floor(a/1000)%60,2)local e=format_helper(math.floor(a/(1000*60))%60,2)local f=format_helper(math.floor(a/(1000*60*60))%24,2)if f=='00'then return e..':'..d..'.'..c else return f..':'..e..':'..d end end
+
 
 -- [[ STRAFESNET API ]] --
 
