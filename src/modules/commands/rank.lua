@@ -10,6 +10,8 @@ commands:Add('rank',{},'rank <username|mention|"me"> <game> <style>', function(t
     local user=args[1]
     local game=API.GAMES[args[2]]
     local style=API.STYLES[args[3]]
+    if not game then return message:reply('invalid game') end
+    if not style then return message:reply('invalid style') end
     if user=='me' then
         local me=message.author
         local roblox_user=API:GetRobloxInfoFromDiscordId(me.id)
@@ -25,8 +27,9 @@ commands:Add('rank',{},'rank <username|mention|"me"> <game> <style>', function(t
         local roblox_user=API:GetRobloxInfoFromUsername(user)
         user=roblox_user
     end
-    local rank = API:GetRank(user.id,game,style)
     local sn_info = API:GetUser(user.id)
+    if not sn_info.ID then return message:reply('```No data with StrafesNET is associated with that user.```') end
+    local rank = API:GetRank(user.id,game,style)
     local rank_string = API:FormatRank(rank.Rank)
     local skill = API:FormatSkill(rank.Skill)
     local formatted_message = '```'..

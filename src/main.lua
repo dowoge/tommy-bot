@@ -213,6 +213,7 @@ local commands=require('./modules/commands.lua')
 local prefix = ','
 local client = discordia.Client()
 _G.client = client
+_G.locked = false
 
 discordia.extensions()
 
@@ -265,20 +266,24 @@ client:on('messageCreate', function(message)
         local cmdName=args[1]
         table.remove(args,1)
         local command=commands.command_list[cmdName]
-        if command~=nil then
-            if message.guild~=nil then
-                local s,e=pcall(function()
-                    command.exec({message=message,args=args,mentions=mentions,t={client,discordia,token}})
-                end)
-                if not s then
-                    message:reply('tripped : '..e:split('/')[#e:split('/')])
+        if not _G.locked then
+            if command~=nil then
+                if message.guild~=nil then
+                    local s,e=pcall(function()
+                        command.exec({message=message,args=args,mentions=mentions,t={client,discordia,token}})
+                    end)
+                    if not s then
+                        message:reply('tripped : '..e:split('/')[#e:split('/')])
+                    end
+                else
+                    message:reply('i will not let you type in dms!!! 😠')
                 end
             else
-                message:reply('i will not let you type in dms!!! 😠')
+                message:reply('command does not exist 👎')
             end
         else
-            message:reply('command does not exist 👎')
-        end
+            message:reply('bot is locked, please wait until it is unlocked')
+        end 
     end
 end)
 
