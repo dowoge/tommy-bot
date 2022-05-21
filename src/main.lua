@@ -281,8 +281,8 @@ client:on('messageCreate', function(message)
             else
                 message:reply('command does not exist 👎')
             end
-        else
-            message:reply('bot is locked, please wait until it is unlocked')
+        else --_G.current = {name=user.name,game=API.GAMES[game],style=API.STYLES[style]:lower()}
+            message:reply('Bot is currently in use, please try again later ('.._G.current.name..' for '.._G.current.game..' in '.._G.current.style..')')
         end 
     end
 end)

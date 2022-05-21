@@ -33,6 +33,7 @@ commands:Add('skill',{},'skill <username|mention|"me"> <game> <style>', function
     if not sn_info.ID then return message:reply('```No data with StrafesNET is associated with that user.```') end
     print('user:',user.id)
     _G.locked = true
+    _G.current = {name=user.name,game=API.GAMES[game],style=API.STYLES[style]:lower()}
     local times = {}
     local res,rheaders = API:GetUserTimes(user.id,nil,style,game)
     if #res~=0 then
@@ -64,7 +65,13 @@ commands:Add('skill',{},'skill <username|mention|"me"> <game> <style>', function
         table.sort(times,function(t1,t2)
             return t1.SkillRaw<t2.SkillRaw
         end)
-        local msg = ''
+        local average = 0
+        for _,time in next,times do
+            local skill = time.SkillRaw
+            average = average+skill
+        end
+        average = average/#times
+        local msg = 'Average Skill: '..API:FormatSkill(average)..'\n'
         for _,time in next,times do
             -- msg = msg..'['..time.Rank..'/'..time.MapCompletionCount..'] '..time.Map..' ('..time.Skill..')\n'
             msg = msg..API.MAPS[game][time.Map].DisplayName..' ('..time.Map..'): '..time.Skill..' for '..time.Rank..'/'..time.MapCompletionCount..' with '..API:FormatTime(time.Time)..'\n'
