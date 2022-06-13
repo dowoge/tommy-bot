@@ -13,6 +13,19 @@ commands:Add('map',{},'get map info', function(t)
     end
     if not map_name then return t.message:reply('invalid arguments') end
     if game then
+        for mn,Map in next, API.MAPS[game] do
+            if (Map.DisplayName:lower():sub(1,#map_name)==map_name:lower()) then
+                local map = API.MAPS[game][mn]
+                local formatted_message = '```'..
+                'Map: '..map.DisplayName..' ('..API.GAMES[game]..')\n'..
+                'ID: '..map.ID..'\n'..
+                'Creator: '..map.Creator..'\n'..
+                'PlayCount: '..map.PlayCount..'\n'..
+                'Published: '..os.date('%A, %B %d %Y @ %I:%M (%p)',map.Date)..
+                '```'
+                return t.message:reply(formatted_message)
+            end
+        end
         if API.MAPS[game][map_name] then
             local map = API.MAPS[game][map_name]
             local formatted_message = '```'..
