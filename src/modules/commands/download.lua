@@ -20,7 +20,7 @@ function split(s,d)
 end
 
 function clearTmp()
-    for file in io.popen([[dir "./tmp" /b]]):lines() do os.remove('./tmp/'..file) end
+    for file in io.popen([[dir "./tmp" /b]]):lines() do if file then os.remove('./tmp/'..file) end end
 end
 
 commands:Add('yt',{},"wip", function(t)

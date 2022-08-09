@@ -7,6 +7,8 @@ local ROVER_API_URL = 'https://verify.eryn.io/api/'
 local ROBLOX_API_URL = 'https://users.roblox.com/v1/'
 local ROBLOX_API_URL2 = 'https://api.roblox.com/'
 
+local RANK_CONSTANT = 0.5
+
 local t=tostring
 local r=function(n,nd) return tonumber(string.format('%.' .. (nd or 0) .. 'f', n)) end
 
@@ -149,8 +151,15 @@ function API:GetMapCompletionCount(MAP_ID,STYLE_ID)
     if not MAP_ID or not STYLE_ID then return 'empty id' end
     local _,headers = API:GetMapTimes(MAP_ID,STYLE_ID)
     local pages = headers['Pagination-Count']
-    local res = API:GetMapTimes(MAP_ID,STYLE_ID,pages)
+    local res,h = API:GetMapTimes(MAP_ID,STYLE_ID,pages)
+    if not res then
+        table.foreach(h,print)
+    end
     return ((pages-1)*200)+#res
+end
+
+function API:CalculatePoint(rank,count)
+    return RANK_CONSTANT*(math.exp(RANK_CONSTANT)-1)/(1-math.exp(math.max(-700, -RANK_CONSTANT*count)))*math.exp(math.max(-700, -RANK_CONSTANT*rank))+(1-RANK_CONSTANT)*(1+2*(count-rank))/(count*count)
 end
 
 -- [[ ROBLOX / ROVER AND OTHER APIs ]] --

@@ -52,26 +52,28 @@ commands:Add('skill',{},'skill <username|mention|"me"> <game> <style>', function
         end
         print('times:',#times)
         t.message:reply('ETA: '..(math.floor(#times*3/100))..' minutes '..((#times*3)%60)..' seconds (found '..#times..' times out of '..API.MAPS[game].count..' maps)')
-        local i = 1
+        local test_a,test_b = 0,0
         for _,time in next,times do
             local rank = API:GetTimeRank(time.ID).Rank
-            local count = API:GetMapCompletionCount(time.Map,style)
+            local count = tonumber(API:GetMapCompletionCount(time.Map,style))
+            time.Points = API:CalculatePoint(rank,count)
             time.Rank = rank
             time.MapCompletionCount = count
-            time.Skill = API:FormatSkill(1-((rank-1)/tonumber(count)))
-            time.SkillRaw = 1-((rank-1)/tonumber(count))
-            i=i+1
+            time.Skill = API:FormatSkill((count-rank)/(count-1))
+            time.SkillRaw = (count-rank)/(count-1)
+            test_a=test_a+(count-rank)
+            test_b=test_b+(count-1)
         end
         table.sort(times,function(t1,t2)
             return t1.SkillRaw<t2.SkillRaw
         end)
-        local average = 0
+        local points = 0
         for _,time in next,times do
-            local skill = time.SkillRaw
-            average = average+skill
+            points = points+time.Points
         end
-        average = average/#times
-        local msg = 'Average Skill: '..API:FormatSkill(average)..'\n'
+        local msg = 'Average Skill: '..API:FormatSkill((test_a+1)/(test_b-1))..'\n'..
+                    'Points: '..points..'\n'
+                    
         for _,time in next,times do
             -- msg = msg..'['..time.Rank..'/'..time.MapCompletionCount..'] '..time.Map..' ('..time.Skill..')\n'
             msg = msg..API.MAPS[game][time.Map].DisplayName..' ('..time.Map..'): '..time.Skill..' for '..time.Rank..'/'..time.MapCompletionCount..' with '..API:FormatTime(time.Time)..'\n'
