@@ -194,7 +194,17 @@ function API:CalculatePoint(rank,count)
 end
 
 function API:GetUserFromAny(user,message)
-    if user=='me' then
+    local str = user:match('^["\'](.+)[\'"]$')
+    local num = user:match('^(%d+)$')
+    if str then
+        local roblox_user=API:GetRobloxInfoFromUsername(str)
+        if not roblox_user.id then return 'User not found' end
+        return roblox_user
+    elseif num then
+        local roblox_user = API:GetRobloxInfoFromUserId(user)
+        if not roblox_user.id then return 'Invalid user id' end
+        return roblox_user
+    elseif user=='me' then
         local me=message.author
         local roblox_user=API:GetRobloxInfoFromDiscordId(me.id)
         if not roblox_user.id then return 'You are not registered with the RoverAPI' end
@@ -210,6 +220,26 @@ function API:GetUserFromAny(user,message)
         if not roblox_user.id then return 'User not found' end
         return roblox_user
     end
+    -- if user=='me' then
+    --     local me=message.author
+    --     local roblox_user=API:GetRobloxInfoFromDiscordId(me.id)
+    --     if not roblox_user.id then return 'You are not registered with the RoverAPI' end
+    --     return roblox_user
+    -- elseif user:match('<@%d+>') then
+    --     local user_id=user:match('<@(%d+)>')
+    --     local member=message.guild:getMember(user_id)
+    --     local roblox_user=API:GetRobloxInfoFromDiscordId(member.id)
+    --     if not roblox_user.id then return 'User is not registered with the RoverAPI' end
+    --     return roblox_user
+    -- elseif user:match('%d+')==user then
+    --     local roblox_user = API:GetRobloxInfoFromUserId(user)
+    --     if not roblox_user.id then return 'Invalid user id' end
+    --     return roblox_user
+    -- else
+    --     local roblox_user=API:GetRobloxInfoFromUsername(user)
+    --     if not roblox_user.id then return 'User not found' end
+    --     return roblox_user
+    -- end
     return 'Something went wrong (this should generally not happen)'
 end
 

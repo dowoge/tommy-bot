@@ -36,7 +36,7 @@ commands:Add('user',{},'user <username|mention|"me">', function(t)
     local user_info=API:GetUserFromAny(user,message)
     if type(user_info)=='string' then return message:reply('```'..user_info..'```') end
     -- for a,b in next,user_info do user_info[a]=tostring(b)end
-    local description = user_info.description
+    local description = user_info.description=='' and 'null' or user_info.description
     local created = tostring(date.fromISO(user_info.created):toSeconds())
     local current = date():toSeconds()
     local accountAge = round((current-created)/86400)
@@ -66,8 +66,7 @@ commands:Add('user',{},'user <username|mention|"me">', function(t)
             {name='Last Online',value='<t:'..round(LastOnline)..':R>',inline=true},
             {name='Last Location',value=LastLocation,inline=true},
             {name='Banned',value=isBanned,inline=true},
-
-            {name='Description',value=description or 'None',inline=false},
+            {name='Description',value=description,inline=false},
         }
     }
     message:reply({embed=embed})
