@@ -266,24 +266,20 @@ client:on('messageCreate', function(message)
         local cmdName=args[1]
         table.remove(args,1)
         local command=commands.command_list[cmdName]
-        if not _G.locked then
-            if command~=nil then
-                if message.guild~=nil then
-                    local s,e=pcall(function()
-                        command.exec({message=message,args=args,mentions=mentions,t={client,discordia,token}})
-                    end)
-                    if not s then
-                        message:reply('tripped : '..e:split('/')[#e:split('/')])
-                    end
-                else
-                    message:reply('i will not let you type in dms!!! 😠')
+        if command~=nil then
+            if message.guild~=nil then
+                local s,e=pcall(function()
+                    command.exec({message=message,args=args,mentions=mentions,t={client,discordia,token}})
+                end)
+                if not s then
+                    message:reply('tripped : '..e:split('/')[#e:split('/')])
                 end
             else
-                message:reply('command does not exist 👎')
+                message:reply('i will not let you type in dms!!! 😠')
             end
-        else --_G.current = {name=user.name,game=API.GAMES[game],style=API.STYLES[style]:lower()}
-            message:reply('Bot is currently in use, please try again later ('.._G.current.name..' for '.._G.current.game..' in '.._G.current.style..')')
-        end 
+        else
+            message:reply('command does not exist 👎')
+        end
     end
 end)
 

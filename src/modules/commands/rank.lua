@@ -29,6 +29,7 @@ commands:Add('rank',{},'rank <username|mention|"me"> <game> <style>', function(t
     end
     local sn_info = API:GetUser(user.id)
     if not sn_info.ID then return message:reply('```No data with StrafesNET is associated with that user.```') end
+    if sn_info.State==2 then return message:reply('```This user is currently blacklisted```') end
     local rank = API:GetRank(user.id,game,style)
     local rank_string = API:FormatRank(rank.Rank)
     local skill = API:FormatSkill(rank.Skill)

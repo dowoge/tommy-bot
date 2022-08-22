@@ -6,6 +6,8 @@ local STRAFESNET_API_URL = 'https://api.strafes.net/v1/'
 local ROVER_API_URL = 'https://verify.eryn.io/api/'
 local ROBLOX_API_URL = 'https://users.roblox.com/v1/'
 local ROBLOX_API_URL2 = 'https://api.roblox.com/'
+local ROBLOX_THUMBNAIL_URL = 'https://thumbnails.roblox.com/v1/'
+local ROBLOX_PREMIUM_URL = 'https://premiumfeatures.roblox.com/v1/'
 
 local RANK_CONSTANT = 0.5
 
@@ -40,9 +42,38 @@ API.STYLES=STYLES
 API.STYLES_LIST=STYLES_LIST
 API.STATES=STATES
 
+API.ROBLOX_LOCATION_TYPES={
+    [0]='Mobile Website',
+    [1]='Mobile In-Game',
+    [2]='Website',
+    [3]='Roblox Studio',
+    [4]='In-Game',
+    [5]='XboxApp',
+    [6]='TeamCreate'
+}
+
+API.ROBLOX_THUMBNAIL_SIZES={
+    [48]='48x48',
+    [50]='50x50',
+    [60]='60x60',
+    [75]='75x75',
+    [100]='100x100',
+    [110]='110x110',
+    [150]='150x150',
+    [180]='180x180',
+    [352]='352x352',
+    [420]='420x420',
+    [720]='720x720'
+}
+API.ROBLOX_THUMBNAIL_TYPES = {
+    AVATAR='avatar',
+    BUST='avatar-bust',
+    HEADSHOT='avatar-headshot'
+}
+
 -- insyri make this BTW
 -- use as local err, res = parseToURLArgs(), thanks golang for this idea
-function parseToURLArgs(tb) function Err(err) return err, nil end function Ok(res) return nil, res end if not tb then return Err('got nothing') end if type(tb) ~= 'table' then return Err('expected table, got '..type(tb)) end local str = '?' local index = 1 for key, value in pairs(tb) do if index == 1 then str = str..key..'='..t(value) else str = str..'&'..key..'='..t(value) end index = index + 1 end return Ok(str) end
+function parseToURLArgs(tb) local function Err(err) return err, nil end local function Ok(res) return nil, res end if not tb then return Err('got nothing') end if type(tb) ~= 'table' then return Err('expected table, got '..type(tb)) end local str = '?' local index = 1 for key, value in pairs(tb) do if index == 1 then str = str..key..'='..t(value) else str = str..'&'..key..'='..t(value) end index = index + 1 end return Ok(str) end
 -- fiveman made these (converted to lua from python)
 function format_helper(a,b)a=tostring(a)while#a<b do a='0'..a end;return a end
 function formatTime(a)if a>86400000 then return'>1 day'end;local c=format_helper(a%1000,3)local d=format_helper(math.floor(a/1000)%60,2)local e=format_helper(math.floor(a/(1000*60))%60,2)local f=format_helper(math.floor(a/(1000*60*60))%24,2)if f=='00'then return e..':'..d..'.'..c else return f..':'..e..':'..d end end
@@ -162,6 +193,27 @@ function API:CalculatePoint(rank,count)
     return RANK_CONSTANT*(math.exp(RANK_CONSTANT)-1)/(1-math.exp(math.max(-700, -RANK_CONSTANT*count)))*math.exp(math.max(-700, -RANK_CONSTANT*rank))+(1-RANK_CONSTANT)*(1+2*(count-rank))/(count*count)
 end
 
+function API:GetUserFromAny(user,message)
+    if user=='me' then
+        local me=message.author
+        local roblox_user=API:GetRobloxInfoFromDiscordId(me.id)
+        if not roblox_user.id then return 'You are not registered with the RoverAPI' end
+        return roblox_user
+    elseif user:match('<@%d+>') then
+        local user_id=user:match('<@(%d+)>')
+        local member=message.guild:getMember(user_id)
+        local roblox_user=API:GetRobloxInfoFromDiscordId(member.id)
+        if not roblox_user.id then return 'User is not registered with the RoverAPI' end
+        return roblox_user
+    else
+        local roblox_user=API:GetRobloxInfoFromUsername(user)
+        if not roblox_user.id then return 'User not found' end
+        return roblox_user
+    end
+    return 'Something went wrong (this should generally not happen)'
+end
+
+
 -- [[ ROBLOX / ROVER AND OTHER APIs ]] --
 
 function API:GetRobloxInfoFromUserId(USER_ID)
@@ -188,4 +240,46 @@ function API:GetRobloxInfoFromDiscordId(DISCORD_ID)
     return response2
 end
 
+function API:GetUserOnlineStatus(USER_ID) -- https://api.roblox.com/users/1455906620/onlinestatus
+    if not USER_ID then return 'empty id' end
+    local response,headers = http_request('GET', ROBLOX_API_URL2..'users/'..USER_ID..'/onlinestatus', API_HEADER)
+    return response,headers
+end
+
+function API:GetUserThumbnail(USER_ID,TYPE,SIZE) -- https://thumbnails.roblox.com/v1/users/avatar?userIds=1455906620&size=180x180&format=Png&isCircular=false
+    if not USER_ID then return 'empty id' end
+    local _TYPE = self.ROBLOX_THUMBNAIL_TYPES[TYPE] or 'avatar'
+    local _SIZE = self.ROBLOX_THUMBNAIL_SIZES[SIZE] or '180x180'
+    local err, res = parseToURLArgs({userIds=USER_ID,size=_SIZE,format='Png',isCircular=false})
+    if err then return err end
+    local response,headers = http_request('GET', ROBLOX_THUMBNAIL_URL..'users/'.._TYPE..res, API_HEADER)
+    return response,headers
+end
+
+function API:GetUserPremiumState(USER_ID,X_CSRF_TOKEN) -- https://premiumfeatures.roblox.com/v1/users/1455906620/validate-membership
+    if not USER_ID then return 'empty id' end
+    local response,headers = http_request('GET', ROBLOX_PREMIUM_URL..'users/'..USER_ID..'/validate-membership', API_HEADER,nil,{ROBLOX_COOKIE})
+    return response,headers
+end
+
+--[[
+1: method
+2: url
+3: headers
+4: body
+5: options
+
+1 "POST",
+2 "https://groups.roblox.com/v1/user/groups/primary",
+3 {
+    {"Content-Type", "text/json"},
+    {"X-CSRF-TOKEN", X_CSRF_TOKEN},
+    {"Cookie", ".ROBLOSECURITY=YOUR_COOKIE_GOES_HERE_AFTER_THE_EQUAL_SIGN"}
+},
+4 "{\"groupId\": GROUP_ID_NUMBER}",
+5 {"ALSO_PUT_YOUR_COOKIE_HERE"}
+
+
+
+]]
 return API

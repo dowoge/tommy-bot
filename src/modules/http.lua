@@ -1,13 +1,21 @@
 local http = require('coro-http')
 local json = require('json')
 function wait(n)c=os.clock t=c()while c()-t<=n do end;end
-local request=function(method,url,headers,params)
-    local headers,body=http.request(method,url,headers or {{"Content-Type", "application/json"}},params)
-    body=json.decode(body)
+--[[
+1: method
+2: url
+3: headers
+4: body
+5: options]]
+local function request(method,url,headers,body,options)
+    local headers,body=http.request(method,url,headers,body,options)
+    local rbody=json.decode(body)
     local rheaders={}
     for _,t in pairs(headers) do
         if type(t)=='table' then
             rheaders[t[1]]=t[2]
+        else
+            rheaders[_]=t
         end
     end
     local remaining = tonumber(rheaders['RateLimit-Remaining'])
@@ -16,7 +24,7 @@ local request=function(method,url,headers,params)
         local t = remaining==0 and reset or .38
         wait(t)
     end
-    return body,rheaders
+    return rbody,rheaders
 end
 
 -- local urlparamencode=function()
