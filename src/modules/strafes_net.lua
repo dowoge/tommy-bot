@@ -286,30 +286,4 @@ function API:GetUserThumbnail(USER_ID,TYPE,SIZE) -- https://thumbnails.roblox.co
     return response,headers
 end
 
-function API:GetUserPremiumState(USER_ID,X_CSRF_TOKEN) -- https://premiumfeatures.roblox.com/v1/users/1455906620/validate-membership
-    if not USER_ID then return 'empty id' end
-    local response,headers = http_request('GET', ROBLOX_PREMIUM_URL..'users/'..USER_ID..'/validate-membership', API_HEADER,nil,{ROBLOX_COOKIE})
-    return response,headers
-end
-
---[[
-1: method
-2: url
-3: headers
-4: body
-5: options
-
-1 "POST",
-2 "https://groups.roblox.com/v1/user/groups/primary",
-3 {
-    {"Content-Type", "text/json"},
-    {"X-CSRF-TOKEN", X_CSRF_TOKEN},
-    {"Cookie", ".ROBLOSECURITY=YOUR_COOKIE_GOES_HERE_AFTER_THE_EQUAL_SIGN"}
-},
-4 "{\"groupId\": GROUP_ID_NUMBER}",
-5 {"ALSO_PUT_YOUR_COOKIE_HERE"}
-
-
-
-]]
 return API
