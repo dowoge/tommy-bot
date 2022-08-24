@@ -7,9 +7,9 @@ local ROVER_API_URL = 'https://verify.eryn.io/api/'
 local ROBLOX_API_URL = 'https://users.roblox.com/v1/'
 local ROBLOX_API_URL2 = 'https://api.roblox.com/'
 local ROBLOX_THUMBNAIL_URL = 'https://thumbnails.roblox.com/v1/'
-local ROBLOX_PREMIUM_URL = 'https://premiumfeatures.roblox.com/v1/'
 
-local RANK_CONSTANT = 0.5
+
+local RANK_CONSTANT_A, RANK_CONSTANT_B, RANK_CONSTANT_C, RANK_CONSTANT_D, RANK_CONSTANT_E = 0.215, 0.595, 0.215, 0.215, 0.71
 
 local t=tostring
 local r=function(n,nd) return tonumber(string.format('%.' .. (nd or 0) .. 'f', n)) end
@@ -188,11 +188,24 @@ function API:GetMapCompletionCount(MAP_ID,STYLE_ID)
     end
     return ((pages-1)*200)+#res
 end
-
+--cool doggo
 function API:CalculatePoint(rank,count)
-    return RANK_CONSTANT*(math.exp(RANK_CONSTANT)-1)/(1-math.exp(math.max(-700, -RANK_CONSTANT*count)))*math.exp(math.max(-700, -RANK_CONSTANT*rank))+(1-RANK_CONSTANT)*(1+2*(count-rank))/(count*count)
+    return RANK_CONSTANT_A*(math.exp(RANK_CONSTANT_B)-1)/(1-math.exp(math.max(-700, -RANK_CONSTANT_C*count)))*math.exp(math.max(-700, -RANK_CONSTANT_D*rank))+(1-RANK_CONSTANT_E)*(1+2*(count-rank))/(count*count)
 end
 
+function API:Pad(str,n)
+    n = n or 20
+    str = tostring(str)
+    return str..string.rep(' ',n-#str)
+end
+
+function API:CalculateDifference(v1,v2)
+    return math.abs(v1-v2)
+end
+
+function API:CalculateDifferencePercent(v1,v2)
+    return math.abs((1-(v1/v2))*100)..'%'
+end
 function API:GetUserFromAny(user,message)
     local str = user:match('^["\'](.+)[\'"]$')
     local num = user:match('^(%d+)$')

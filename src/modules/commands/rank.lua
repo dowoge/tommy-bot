@@ -12,21 +12,7 @@ commands:Add('rank',{},'rank <username|mention|"me"> <game> <style>', function(t
     local style=API.STYLES[args[3]]
     if not game then return message:reply('invalid game') end
     if not style then return message:reply('invalid style') end
-    if user=='me' then
-        local me=message.author
-        local roblox_user=API:GetRobloxInfoFromDiscordId(me.id)
-        if not roblox_user.id then return message:reply('```You are not registered with the RoverAPI```') end
-        user=roblox_user
-    elseif user:match('<@%d+>') then
-        local user_id=user:match('<@(%d+)>')
-        local member=message.guild:getMember(user_id)
-        local roblox_user=API:GetRobloxInfoFromDiscordId(member.id)
-        if not roblox_user.id then return message:reply('```You are not registered with the RoverAPI```') end
-        user=roblox_user
-    else
-        local roblox_user=API:GetRobloxInfoFromUsername(user)
-        user=roblox_user
-    end
+    user = API:GetUserFromAny(user)
     local sn_info = API:GetUser(user.id)
     if not sn_info.ID then return message:reply('```No data with StrafesNET is associated with that user.```') end
     if sn_info.State==2 then return message:reply('```This user is currently blacklisted```') end

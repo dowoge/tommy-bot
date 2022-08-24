@@ -3,6 +3,7 @@ local API=require('./../strafes_net.lua')
 local commands=require('./../commands.lua')
 function sleep(n) local t = os.clock() while os.clock()-t <= n do end end
 discordia.extensions()
+local pad = API.Pad
 commands:Add('skill',{},'skill <username|mention|"me"> <game> <style>', function(t)
     local args=t.args
     local message=t.message
@@ -43,6 +44,12 @@ commands:Add('skill',{},'skill <username|mention|"me"> <game> <style>', function
             for _,time in next,times do
                 local rank = API:GetTimeRank(time.ID).Rank
                 local count = tonumber(API:GetMapCompletionCount(time.Map,style))
+                if not rank or not count then
+                    print('NO RANK OR COUNT')
+                    print(rank,count)
+                    rank = 1
+                    count = 1
+                end
                 time.Points = API:CalculatePoint(rank,count)
                 time.Rank = rank
                 time.MapCompletionCount = count
@@ -58,12 +65,19 @@ commands:Add('skill',{},'skill <username|mention|"me"> <game> <style>', function
             for _,time in next,times do
                 points = points+time.Points
             end
-            local msg = 'Average Skill: '..API:FormatSkill((test_a+1)/(test_b-1))..'\n'..
-                        'Points: '..points..'\n'
+            local s = (test_a)/(test_b-1)
+            print(s)
+            local msg = 'Average Skill: '..API:FormatSkill(math.clamp(s,0,1))..'\n'..
+                        'Points: '..points..'\n'..
+                        pad(API,'Map',50)..' | '..pad(API,'Skill',7)..' | '.. pad(API,'Placement',14)..' | Time\n\n'
                         
             for _,time in next,times do
                 -- msg = msg..'['..time.Rank..'/'..time.MapCompletionCount..'] '..time.Map..' ('..time.Skill..')\n'
-                msg = msg..API.MAPS[game][time.Map].DisplayName..' ('..time.Map..'): '..time.Skill..' for '..time.Rank..'/'..time.MapCompletionCount..' with '..API:FormatTime(time.Time)..'\n'
+                local mapStr = API.MAPS[game][time.Map].DisplayName..' ('..time.Map..')'
+                local skill = time.Skill
+                local rankStr = time.Rank..'/'..time.MapCompletionCount
+                local timeStr = API:FormatTime(time.Time)
+                msg = msg.. pad(API,mapStr,50)..' | '..pad(API,skill,7)..' | '.. pad(API,rankStr,14)..' | '..timeStr..'\n'
             end
             local txt = './skill-'..API.GAMES[game]..'-'..API.STYLES[style]:lower()..'-'..user.name..'.txt'
             local file=io.open(txt,'w+')
@@ -86,4 +100,14 @@ commands:Add('skill',{},'skill <username|mention|"me"> <game> <style>', function
         --_G.current = {name=user.name,game=API.GAMES[game],style=API.STYLES[style]:lower()}
         message:reply('Bot is currently in use, please try again later ('.._G.current.name..' for '.._G.current.game..' in '.._G.current.style..')')
     end
+end)
+
+commands:Add('compare',{},'compare n1 n2', function(t)
+    local args=t.args
+    local message=t.message
+    local n1 = args[1]
+    local n2 = args[2]
+    local compared = API:CalculateDifference(n1,n2)
+    local compared_percent = API:CalculateDifferencePercent(n1,n2)
+    message:reply(tostring(compared)..' ('..compared_percent..')')
 end)
