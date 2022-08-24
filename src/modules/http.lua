@@ -27,7 +27,6 @@ local function request(method,url,headers,body,options)
     local remaining_hour = tonumber(rheaders['X-RateLimit-Remaining-Hour'])
     local reset = tonumber(rheaders['RateLimit-Reset'])
     local retry_after = tonumber(rheaders['Retry-After'])
-    print(remaining,remaining_hour)
     if remaining and reset then
         local t = remaining==0 and reset or .38
         if retry_after then t = retry_after end

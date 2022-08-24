@@ -65,8 +65,6 @@ commands:Add('skill',{},'skill <username|mention|"me"> <game> <style>', function
             for _,time in next,times do
                 points = points+time.Points
             end
-            local s = (test_a)/(test_b-1)
-            print(s)
             local msg = 'Average Skill: '..API:FormatSkill(math.clamp(s,0,1))..'\n'..
                         'Points: '..points..'\n'..
                         pad(API,'Map',50)..' | '..pad(API,'Skill',7)..' | '.. pad(API,'Placement',14)..' | Time\n\n'
