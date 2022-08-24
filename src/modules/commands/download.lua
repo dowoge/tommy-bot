@@ -30,7 +30,7 @@ function isTmpEmpty()
     return dir==nil, dir, dir~=nil and split(dir,'\n') or {}
 end
 
-commands:Add('sc',{},"wip", function(t)
+commands:Add('sc',{},'download soundcloud song (usage: "sc [link]")', function(t)
     local args = t.args
     local message = t.message
     if args[1] then
