@@ -20,11 +20,6 @@ for _,game in next,API.GAMES do
                 end
             end
         end
-        table.sort(maps, function(a, b)
-            a = type(a) == 'table' and a or -1
-            b = type(b) == 'table' and b or -1
-            return #a.DisplayName < #b.DisplayName
-        end)
         setmetatable(maps,{__index=function(self,i)
             if i=='count' then return self.count end
             if not tonumber(i) then
