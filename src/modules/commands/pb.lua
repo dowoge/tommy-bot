@@ -12,7 +12,7 @@ commands:Add('pb', {}, 'get placement on map', function(t)
 
     if #args < 4 then return message:reply('invalid arguments') end
 
-    local user = API:GetUserFromAny(args[1])
+    local user = API:GetUserFromAny(args[1],message)
     local sn_info = API:GetUser(user.id)
     local game = API.GAMES[args[2]]
     local style = API.STYLES[args[3]]
@@ -37,12 +37,12 @@ commands:Add('pb', {}, 'get placement on map', function(t)
         count = 1
     end
 
-    local time_formatted = API:FormatTime(time.Time)
+    local time_formatted = API.FormatTime(time.Time)
     local date = os.date("%x", time.Date)
     local placement = rank .. '/' .. count
     local points = API:CalculatePoint(rank, count)
 
-    local t_n, d_n, p_n= #time_formatted, 8, math.min(#placement, 10)
+    local t_n, d_n, p_n= #time_formatted, 8, math.max(#placement, 10)
 
     local first_line = pad('Time:', t_n + 1) .. '| '
                     .. pad('Date:', d_n + 1) .. '| '

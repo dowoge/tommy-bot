@@ -189,7 +189,7 @@ function API:GetMapCompletionCount(MAP_ID,STYLE_ID)
     return ((pages-1)*200)+#res
 end
 --cool doggo, aidan and me
-function API.CalculatePoint(rank,count)
+function API.CalculatePoint(self,rank,count) --??wtf
     return RANK_CONSTANT_A*(math.exp(RANK_CONSTANT_B)-1)/(1-math.exp(math.max(-700, -RANK_CONSTANT_C*count)))*math.exp(math.max(-700, -RANK_CONSTANT_D*rank))+(1-RANK_CONSTANT_E)*(1+2*(count-rank))/(count*count)
 end
 
