@@ -57,10 +57,10 @@ commands:Add('skill',{},'skill <username|mention|"me"> <game> <style> <sort?=ski
                     rank = 1
                     count = 1
                 end
-                time.Points = API:CalculatePoint(rank,count)
+                time.Points = API.CalculatePoint(rank,count)
                 time.Rank = rank
                 time.MapCompletionCount = count
-                time.Skill = API:FormatSkill((count-rank)/(count-1))
+                time.Skill = API.FormatSkill((count-rank)/(count-1))
                 time.SkillRaw = (count-rank)/(count-1)
                 test_a=test_a+(count-rank)
                 test_b=test_b+(count-1)
@@ -75,9 +75,9 @@ commands:Add('skill',{},'skill <username|mention|"me"> <game> <style> <sort?=ski
                 points = points+time.Points
             end
             local skillFinal = (test_a)/(test_b-1)
-            local msg = 'Average Skill: '..API:FormatSkill(math.clamp(skillFinal,0,1))..'\n'..
+            local msg = 'Average Skill: '..API.FormatSkill(math.clamp(skillFinal,0,1))..'\n'..
                         'Points: '..points..'\n'..
-                        pad(API,'Map',50)..' | '..pad(API,'Points')..' | '..pad(API,'Skill',7)..' | '.. pad(API,'Placement',14)..' | Time\n\n'
+                        pad('Map',50)..' | '..pad('Points')..' | '..pad('Skill',7)..' | '.. pad('Placement',14)..' | Time\n\n'
                         
             for _,time in next,times do
                 -- msg = msg..'['..time.Rank..'/'..time.MapCompletionCount..'] '..time.Map..' ('..time.Skill..')\n'
@@ -85,8 +85,8 @@ commands:Add('skill',{},'skill <username|mention|"me"> <game> <style> <sort?=ski
                 local skill = time.Skill
                 local point = time.Points
                 local rankStr = time.Rank..'/'..time.MapCompletionCount
-                local timeStr = API:FormatTime(time.Time)
-                msg = msg.. pad(API,mapStr,50)..' | '..pad(API,point)..' | '..pad(API,skill,7)..' | '.. pad(API,rankStr,14)..' | '..timeStr..'\n'
+                local timeStr = API.FormatTime(time.Time)
+                msg = msg.. pad(mapStr,50)..' | '..pad(point)..' | '..pad(skill,7)..' | '.. pad(rankStr,14)..' | '..timeStr..'\n'
             end
             local txt = './skill-'..API.GAMES[game]..'-'..API.STYLES[style]:lower()..'-'..user.name..'.txt'
             local file=io.open(txt,'w+')

@@ -82,10 +82,10 @@ function formatTime(a)if a>86400000 then return'>1 day'end;local c=format_helper
 -- [[ STRAFESNET API ]] --
 
 -- Get rank string from rank point
-function API:FormatRank(n) return RANKS[1+math.floor(n*19)] end
+function API.FormatRank(n) return RANKS[1+math.floor(n*19)] end
 -- Get skill percentage from skill point
-function API:FormatSkill(n) return r(n*100,3)..'%' end
-function API:FormatTime(n) return formatTime(n) end
+function API.FormatSkill(n) return r(n*100,3)..'%' end
+function API.FormatTime(n) return formatTime(n) end
 
 -- Time from id.
 function API:GetTime(ID)
@@ -180,79 +180,59 @@ end
 
 function API:GetMapCompletionCount(MAP_ID,STYLE_ID)
     if not MAP_ID or not STYLE_ID then return 'empty id' end
-    local _,headers = API:GetMapTimes(MAP_ID,STYLE_ID)
+    local _,headers = self:GetMapTimes(MAP_ID,STYLE_ID)
     local pages = headers['Pagination-Count']
-    local res,h = API:GetMapTimes(MAP_ID,STYLE_ID,pages)
+    local res,h = self:GetMapTimes(MAP_ID,STYLE_ID,pages)
     if not res then
         table.foreach(h,print)
     end
     return ((pages-1)*200)+#res
 end
 --cool doggo, aidan and me
-function API:CalculatePoint(rank,count)
+function API.CalculatePoint(rank,count)
     return RANK_CONSTANT_A*(math.exp(RANK_CONSTANT_B)-1)/(1-math.exp(math.max(-700, -RANK_CONSTANT_C*count)))*math.exp(math.max(-700, -RANK_CONSTANT_D*rank))+(1-RANK_CONSTANT_E)*(1+2*(count-rank))/(count*count)
 end
 
-function API:Pad(str,n)
+function API.Pad(str,n)
     n = n or 20
     str = tostring(str)
     return str..string.rep(' ',n-#str)
 end
 
-function API:CalculateDifference(v1,v2)
+function API.CalculateDifference(v1,v2)
     return math.abs(v1-v2)
 end
 
-function API:CalculateDifferencePercent(v1,v2)
+function API.CalculateDifferencePercent(v1,v2)
     return math.abs((1-(v1/v2))*100)..'%'
 end
 function API:GetUserFromAny(user,message)
     local str = user:match('^["\'](.+)[\'"]$')
     local num = user:match('^(%d+)$')
     if str then
-        local roblox_user=API:GetRobloxInfoFromUsername(str)
+        local roblox_user=self:GetRobloxInfoFromUsername(str)
         if not roblox_user.id then return 'User not found' end
         return roblox_user
     elseif num then
-        local roblox_user = API:GetRobloxInfoFromUserId(user)
+        local roblox_user = self:GetRobloxInfoFromUserId(user)
         if not roblox_user.id then return 'Invalid user id' end
         return roblox_user
     elseif user=='me' then
         local me=message.author
-        local roblox_user=API:GetRobloxInfoFromDiscordId(me.id)
+        local roblox_user=self:GetRobloxInfoFromDiscordId(me.id)
         if not roblox_user.id then return 'You are not registered with the RoverAPI' end
         return roblox_user
     elseif user:match('<@%d+>') then
         local user_id=user:match('<@(%d+)>')
         local member=message.guild:getMember(user_id)
-        local roblox_user=API:GetRobloxInfoFromDiscordId(member.id)
+        local roblox_user=self:GetRobloxInfoFromDiscordId(member.id)
         if not roblox_user.id then return 'User is not registered with the RoverAPI' end
         return roblox_user
     else
-        local roblox_user=API:GetRobloxInfoFromUsername(user)
+        local roblox_user=self:GetRobloxInfoFromUsername(user)
         if not roblox_user.id then return 'User not found' end
         return roblox_user
     end
-    -- if user=='me' then
-    --     local me=message.author
-    --     local roblox_user=API:GetRobloxInfoFromDiscordId(me.id)
-    --     if not roblox_user.id then return 'You are not registered with the RoverAPI' end
-    --     return roblox_user
-    -- elseif user:match('<@%d+>') then
-    --     local user_id=user:match('<@(%d+)>')
-    --     local member=message.guild:getMember(user_id)
-    --     local roblox_user=API:GetRobloxInfoFromDiscordId(member.id)
-    --     if not roblox_user.id then return 'User is not registered with the RoverAPI' end
-    --     return roblox_user
-    -- elseif user:match('%d+')==user then
-    --     local roblox_user = API:GetRobloxInfoFromUserId(user)
-    --     if not roblox_user.id then return 'Invalid user id' end
-    --     return roblox_user
-    -- else
-    --     local roblox_user=API:GetRobloxInfoFromUsername(user)
-    --     if not roblox_user.id then return 'User not found' end
-    --     return roblox_user
-    -- end
     return 'Something went wrong (this should generally not happen)'
 end
 
