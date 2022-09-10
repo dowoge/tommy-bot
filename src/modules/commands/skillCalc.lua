@@ -4,21 +4,28 @@ local commands=require('./../commands.lua')
 function sleep(n) local t = os.clock() while os.clock()-t <= n do end end
 discordia.extensions()
 local pad = API.Pad
-commands:Add('skill',{},'skill <username|mention|"me"> <game> <style>', function(t)
+commands:Add('skill',{},'skill <username|mention|"me"> <game> <style> <sort?=skill|point>', function(t)
     local args=t.args
     local message=t.message
     if not _G.locked then
-        if #args<3 then return message:reply('invalid arguments') end
+        if #args<3 then return message:reply('usage: `skill <username|mention|"me"> <game> <style> <sort?="skill"|"point">`') end
         local user=args[1]
         local game=API.GAMES[args[2]]
         local style=API.STYLES[args[3]]
         if not game then return message:reply('invalid game') end
         if not style then return message:reply('invalid style') end
+        local sort = args[4]
+        if type(sort)=='string' and sort:lower()~='skill' and sort:lower()~='point' then
+            return message:reply('invalid sort option, valid options are "skill" or "point"')
+        elseif sort==nil then
+            sort = 'skill'
+        end
         print('getting user')
         local user = API:GetUserFromAny(user,message)
         if type(user)=='string' then return message:reply('```'..user..'```') end
         local sn_info = API:GetUser(user.id)
         if not sn_info.ID then return message:reply('```No data with StrafesNET is associated with that user.```') end
+        if sn_info.State==2 then return message:reply('```This user is currently blacklisted```') end
         print(user.name,user.id,API.GAMES[game],API.STYLES[style]:lower())
         _G.locked = true
         _G.current = {name=user.name,game=API.GAMES[game],style=API.STYLES[style]:lower()}
@@ -58,24 +65,28 @@ commands:Add('skill',{},'skill <username|mention|"me"> <game> <style>', function
                 test_a=test_a+(count-rank)
                 test_b=test_b+(count-1)
             end
-            table.sort(times,function(t1,t2)
+            table.sort(times,sort=='skill' and function(t1,t2)
                 return t1.SkillRaw<t2.SkillRaw
+            end or sort=='point' and function(t1,t2)
+                return t1.Points<t2.Points
             end)
             local points = 0
             for _,time in next,times do
                 points = points+time.Points
             end
-            local msg = 'Average Skill: '..API:FormatSkill(math.clamp(s,0,1))..'\n'..
+            local skillFinal = (test_a)/(test_b-1)
+            local msg = 'Average Skill: '..API:FormatSkill(math.clamp(skillFinal,0,1))..'\n'..
                         'Points: '..points..'\n'..
-                        pad(API,'Map',50)..' | '..pad(API,'Skill',7)..' | '.. pad(API,'Placement',14)..' | Time\n\n'
+                        pad(API,'Map',50)..' | '..pad(API,'Points')..' | '..pad(API,'Skill',7)..' | '.. pad(API,'Placement',14)..' | Time\n\n'
                         
             for _,time in next,times do
                 -- msg = msg..'['..time.Rank..'/'..time.MapCompletionCount..'] '..time.Map..' ('..time.Skill..')\n'
                 local mapStr = API.MAPS[game][time.Map].DisplayName..' ('..time.Map..')'
                 local skill = time.Skill
+                local point = time.Points
                 local rankStr = time.Rank..'/'..time.MapCompletionCount
                 local timeStr = API:FormatTime(time.Time)
-                msg = msg.. pad(API,mapStr,50)..' | '..pad(API,skill,7)..' | '.. pad(API,rankStr,14)..' | '..timeStr..'\n'
+                msg = msg.. pad(API,mapStr,50)..' | '..pad(API,point)..' | '..pad(API,skill,7)..' | '.. pad(API,rankStr,14)..' | '..timeStr..'\n'
             end
             local txt = './skill-'..API.GAMES[game]..'-'..API.STYLES[style]:lower()..'-'..user.name..'.txt'
             local file=io.open(txt,'w+')

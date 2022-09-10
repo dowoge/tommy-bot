@@ -49,7 +49,7 @@ commands:Add('user',{},'user <username|mention|"me">', function(t)
     
     -- for a,b in next,onlineStatus_info do onlineStatus_info[a]=tostring(b)end
     local LastLocation = onlineStatus_info.LastLocation
-    local LastOnline = date.fromISO(onlineStatus_info.LastOnline):toSeconds()
+    local LastOnline = date.fromISO(onlineStatus_info.LastOnline):toSeconds()+(3600*5)
     
     local userThumbnail = API:GetUserThumbnail(user_info.id).data[1]
 
