@@ -27,7 +27,7 @@ commands:Add('pb', {}, 'get placement on map', function(t)
 
     local time = API:GetUserTimes(user.id, map.ID, style, game)[1]
 
-    if not time then return message:reply('idk bruh') end
+    if not time then return message:reply('```No time was found.```') end
 
     local rank = API:GetTimeRank(time.ID).Rank
     local count = tonumber(API:GetMapCompletionCount(time.Map, style))
