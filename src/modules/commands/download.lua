@@ -68,9 +68,9 @@ commands:Add('sc',{},'download soundcloud song (usage: "sc [link]")', function(t
     end
 end)
 
-commands:Add('ct',{},'',function()
-    clearTmp()
-end)
+-- commands:Add('ct',{},'',function()
+--     clearTmp()
+-- end)
 -- commands:Add('ft',{},'',function()
 --     filterTmp()
 -- end)
