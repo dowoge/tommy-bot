@@ -25,7 +25,7 @@ commands:Add('pb', {}, 'get placement on map', function(t)
     if not sn_info.ID then return message:reply('```No data with StrafesNET is associated with that user.```') end
     if sn_info.State==2 then return message:reply('```This user is currently blacklisted```') end
 
-    local time = API:GetUserTimes(user.id, map, style, game)
+    local time = API:GetUserTimes(user.id, map.ID, style, game)[1]
 
     if not time then return message:reply('idk bruh') end
 
@@ -42,7 +42,7 @@ commands:Add('pb', {}, 'get placement on map', function(t)
     local placement = rank .. '/' .. count
     local points = API:CalculatePoint(rank, count)
 
-    local t_n, d_n, p_n= #time_formatted, 10, math.min(#placement, 10)
+    local t_n, d_n, p_n= #time_formatted, 8, math.min(#placement, 10)
 
     local first_line = pad('Time:', t_n + 1) .. '| '
                     .. pad('Date:', d_n + 1) .. '| '
