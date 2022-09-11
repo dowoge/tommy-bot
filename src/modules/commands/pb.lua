@@ -16,7 +16,7 @@ commands:Add('pb', {}, 'get placement on map', function(t)
     local sn_info = API:GetUser(user.id)
     local game = API.GAMES[args[2]]
     local style = API.STYLES[args[3]]
-    local map = API.MAPS[game][args[4]]
+    local map = API.MAPS[game][table.concat(args,' ',4)]
 
     -- i love checks
     if not game then return message:reply('invalid game') end
@@ -40,7 +40,7 @@ commands:Add('pb', {}, 'get placement on map', function(t)
     local time_formatted = API.FormatTime(time.Time)
     local date = os.date("%x", time.Date)
     local placement = rank .. '/' .. count
-    local points = API:CalculatePoint(rank, count)
+    local points = API.CalculatePoint(rank, count)
 
     local t_n, d_n, p_n= #time_formatted, 8, math.max(#placement, 10)
 
