@@ -4,56 +4,18 @@ local commands=require('./../commands.lua')
 discordia.extensions()
 
 commands:Add('map',{},'get map info', function(t)
-    local game = API.GAMES[t.args[1]]
-    local map_name
-    if not game then
-        map_name = table.concat(t.args,' ')
-    else
-        map_name = table.concat(t.args,' ',2)
-    end
-    if not map_name then return t.message:reply('invalid arguments') end
-    if game then
-        for mn,Map in next, API.MAPS[game] do
-            if (Map.DisplayName:lower():sub(1,#map_name)==map_name:lower()) then
-                local map = API.MAPS[game][mn]
-                local formatted_message = '```'..
-                'Map: '..map.DisplayName..' ('..API.GAMES[game]..')\n'..
-                'ID: '..map.ID..'\n'..
-                'Creator: '..map.Creator..'\n'..
-                'PlayCount: '..map.PlayCount..'\n'..
-                'Published: '..os.date('%A, %B %d %Y @ %I:%M (%p)',map.Date)..
-                '```'
-                return t.message:reply(formatted_message)
-            end
-        end
-        if API.MAPS[game][map_name] then
-            local map = API.MAPS[game][map_name]
-            local formatted_message = '```'..
-            'Map: '..map.DisplayName..' ('..API.GAMES[game]..')\n'..
-            'ID: '..map.ID..'\n'..
-            'Creator: '..map.Creator..'\n'..
-            'PlayCount: '..map.PlayCount..'\n'..
-            'Published: '..os.date('%A, %B %d %Y @ %I:%M (%p)',map.Date)..
-            '```'
-            return t.message:reply(formatted_message)
-        end
-    else
-        for _,game in next,API.GAMES do
-            if type(tonumber(game)) == 'number' then
-                if API.MAPS[game][map_name] then
-                    local map = API.MAPS[game][map_name]
-                    local formatted_message = '```'..
-                    'Map: '..map.DisplayName..' ('..API.GAMES[game]..')\n'..
-                    'ID: '..map.ID..'\n'..
-                    'Creator: '..map.Creator..'\n'..
-                    'PlayCount: '..map.PlayCount..'\n'..
-                    'Published: '..os.date('%A, %B %d %Y @ %I:%M (%p)',map.Date)..
-                    '```'
-                    return t.message:reply(formatted_message)
-                else
-                    return t.message:reply('map not found')
-                end
-            end
-        end
-    end
+    local args = t.args
+    local message = t.message
+
+    local game = API.GAMES[args[1]]
+    local map = not game and (API.MAPS[1][table.concat(args,' ')] or API.MAPS[2][table.concat(args,' ')]) or API.MAPS[game][table.concat(args,' ',2)]
+    if not map then return message:reply('```No map found```') end
+    local formatted_message = '```'..
+                            'Map: '..map.DisplayName..' ('..API.GAMES[map.Game]..')\n'..
+                            'ID: '..map.ID..'\n'..
+                            'Creator: '..map.Creator..'\n'..
+                            'PlayCount: '..map.PlayCount..'\n'..
+                            'Published: '..os.date('%A, %B %d %Y @ %I:%M (%p)',map.Date)..
+                            '```'
+    return message:reply(formatted_message)
 end)
