@@ -116,7 +116,7 @@ commands:Add('compare',{},'compare n1 n2', function(t)
     local message=t.message
     local n1 = args[1]
     local n2 = args[2]
-    local compared = API:CalculateDifference(n1,n2)
-    local compared_percent = API:CalculateDifferencePercent(n1,n2)
+    local compared = API.CalculateDifference(n1,n2)
+    local compared_percent = API.CalculateDifferencePercent(n1,n2)
     message:reply(tostring(compared)..' ('..compared_percent..')')
 end)
