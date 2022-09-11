@@ -46,11 +46,21 @@ for _, game in next, API.GAMES do
             if k=='count' then return self.count end
 
             -- Just to make sure it goes in the right order
-            for i = 1, self.count do
-                local v = self[i]
+            if type(k)=='string' then
+                for i = 1, self.count do
+                    local v = self[i]
 
-                if type(v) == 'table' and v.DisplayName:lower():find(k:lower()) then
-                    return v
+                    if type(v) == 'table' and v.DisplayName:lower():find(tostring(k):lower()) then
+                        return v
+                    end
+                end
+            elseif type(k)=='number' then
+                for i = 1, self.count do
+                    local v = self[i]
+
+                    if type(v) == 'table' and v.ID==k then
+                        return v
+                    end
                 end
             end
         end})
