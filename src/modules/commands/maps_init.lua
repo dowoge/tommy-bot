@@ -15,7 +15,7 @@ local function insert(t, value)
         end
     end
 
-    table.insert(t, mid + state, value.DisplayName)
+    table.insert(t, mid + state, value)
 end
 
 for _, game in next, API.GAMES do
