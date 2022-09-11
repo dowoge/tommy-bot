@@ -27,7 +27,6 @@ function commands:Get(name)
     return self.command_list[name]
 end
 function commands:INIT()
-    -- self.command_list={}
     for file in io.popen([[dir "./src/modules/commands" /b]]):lines() do require('./commands/'..file) end
     print('commands done')
 end
