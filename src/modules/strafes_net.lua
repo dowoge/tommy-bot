@@ -31,7 +31,7 @@ setmetatable(STYLES,{__index=function(self,i)
 end})
 setmetatable(GAMES,{__index=function(self,i)
     for ix,v in pairs(self) do
-        if string.sub(tostring(ix):lower(),1,#i):find(i:lower()) then
+        if tostring(ix):lower()==i:lower() then
             return self[ix]
         end
     end
