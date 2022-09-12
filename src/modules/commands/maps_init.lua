@@ -49,8 +49,7 @@ for _, game in next, API.GAMES do
             if type(k)=='string' then
                 for i = 1, self.count do
                     local v = self[i]
-
-                    if type(v) == 'table' and v.DisplayName:lower():find(tostring(k):lower()) then
+                    if type(v) == 'table' and v.DisplayName:lower():find(tostring(k:gsub('%%', '%%%%'):gsub('^%^', '%%^'):gsub('%$$', '%%$'):gsub('%(', '%%('):gsub('%)', '%%)'):gsub('%.', '%%.'):gsub('%[', '%%['):gsub('%]', '%%]'):gsub('%*', '%%*'):gsub('%+', '%%+'):gsub('%-', '%%-'):gsub('%?', '%%?')):lower()) then
                         return v
                     end
                 end
