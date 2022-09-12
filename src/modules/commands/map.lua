@@ -12,10 +12,8 @@ commands:Add('map',{},'get map info', function(t)
     if not game then
         local str = table.concat(args,' ')
         map = API.MAPS[1][str] or API.MAPS[2][str]
-        print('no game',str)
     else
         map = API.MAPS[game][table.concat(args,' ',2)]
-        print(game,table.concat(args,' ',2))
     end
     
     if not map then return message:reply('```No map found```') end
