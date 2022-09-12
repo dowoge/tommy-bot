@@ -34,15 +34,17 @@ commands:Add('wr', {}, 'get map wr', function(t)
     -- Username:           | Time:     | Points:      | Date:
     local n_n,t_n,d_n,p_n = 20,#time_formatted,8,#points
     
-    local first_line = pad('Username:', n_n + 1) .. '| '
+    local first_line = 'WR Time for map: '..map.DisplayName..' ( 1/'..count..' ) ['..API.GAMES[game]..', '..API.STYLES_LIST[style]..']'
+
+    local second_line = pad('Username:', n_n + 1) .. '| '
                     .. pad('Time:', t_n + 1) .. '| '
                     .. pad('Points:',p_n + 1).. '| '
                     .. 'Date:'
 
-    local second_line = pad(username, n_n + 1) .. '| '
+    local third_line = pad(username, n_n + 1) .. '| '
                      .. pad(time_formatted, t_n + 1) .. '| '
                      .. pad(points, p_n + 1) .. '| '
                      .. date
 
-    return message:reply('```' .. first_line .. '\n' .. second_line .. '```')
+    return message:reply('```' .. first_line .. '\n' .. second_line .. '\n' .. third_line .. '```')
 end)
