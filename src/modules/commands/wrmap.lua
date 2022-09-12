@@ -40,7 +40,7 @@ commands:Add('wr', {}, 'get map wr', function(t)
                     .. 'Date:'
 
     local second_line = pad(username, n_n + 1) .. '| '
-                     .. pad(time_formatted, d_n + 1) .. '| '
+                     .. pad(time_formatted, t_n + 1) .. '| '
                      .. pad(points, p_n + 1) .. '| '
                      .. date
 
