@@ -44,15 +44,17 @@ commands:Add('pb', {}, 'get placement on map', function(t)
 
     local t_n, d_n, p_n= #time_formatted, 8, math.max(#placement, 10)
 
-    local first_line = pad('Time:', t_n + 1) .. '| '
+    local first_line = 'PB Time for map: '..map.DisplayName..' ('..API.GAMES[game]..', '..API.STYLES_LIST[style]..')'
+
+    local second_line = pad('Time:', t_n + 1) .. '| '
                     .. pad('Date:', d_n + 1) .. '| '
                     .. pad('Placement:', p_n + 1) .. '| '
                     .. 'Points:'
 
-    local second_line = pad(time_formatted, t_n + 1) .. '| '
+    local third_line = pad(time_formatted, t_n + 1) .. '| '
                      .. pad(date, d_n + 1) .. '| '
                      .. pad(placement, p_n + 1) .. '| '
                      .. tostring(points)
 
-    return message:reply('```' .. first_line .. '\n' .. second_line .. '```')
+    return message:reply('```' .. first_line .. '\n' .. second_line .. '\n' .. third_line .. '```')
 end)
