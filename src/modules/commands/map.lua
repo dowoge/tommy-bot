@@ -8,7 +8,16 @@ commands:Add('map',{},'get map info', function(t)
     local message = t.message
 
     local game = API.GAMES[args[1]]
-    local map = not game and (API.MAPS[1][table.concat(args,' ')] or API.MAPS[2][table.concat(args,' ')]) or API.MAPS[game][table.concat(args,' ',2)]
+    local map
+    if not game then
+        local str = table.concat(args,' ')
+        map = API.MAPS[1][str] or API.MAPS[2][str]
+        print('no game',str)
+    else
+        map = API.MAPS[game][table.concat(args,' ',2)]
+        print(game,table.concat(args,' ',2))
+    end
+    
     if not map then return message:reply('```No map found```') end
     local formatted_message = '```'..
                             'Map: '..map.DisplayName..' ('..API.GAMES[map.Game]..')\n'..
