@@ -32,7 +32,7 @@ commands:Add('wr', {}, 'get map wr', function(t)
     local points = tostring(API.CalculatePoint(1, count))
 
     -- Username:           | Time:     | Points:      | Date:
-    local n_n,t_n,d_n,p_n = 20,#time_formatted,8,#points
+    local n_n,t_n,p_n = 20,#time_formatted,#points
     
     local first_line = 'WR Time for map: '..map.DisplayName..' ( 1/'..count..' ) ['..API.GAMES[game]..', '..API.STYLES_LIST[style]..']'
 
