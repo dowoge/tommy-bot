@@ -60,8 +60,8 @@ commands:Add('skill',{},'skill <username|mention|"me"> <game> <style> <sort?=ski
                 time.Points = API.CalculatePoint(rank,count)
                 time.Rank = rank
                 time.MapCompletionCount = count
-                time.Skill = API.FormatSkill((count-rank)/(count-1))
-                time.SkillRaw = (count-rank)/(count-1)
+                time.SkillRaw = rank == 1 and 1 or (count-rank)/(count-1)
+                time.Skill = API.FormatSkill(time.SkillRaw)
                 test_a=test_a+(count-rank)
                 test_b=test_b+(count-1)
             end
