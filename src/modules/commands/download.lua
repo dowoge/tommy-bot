@@ -43,11 +43,13 @@ commands:Add('sc',{},'download soundcloud song (usage: "sc [link]")', function(t
             local songName
             repeat
                 local str = s:read()
-                local tag = str:match('^%[(.+)%]')
-                if tag=='soundcloud' then
-                    local song = str:match('^%[soundcloud%] (.+):')
-                    if song:match('%d+')~=song then
-                        songName = song:match('.+/(.+)')
+                if str then
+                    local tag = str:match('^%[(.+)%]')
+                    if tag=='soundcloud' then
+                        local song = str:match('^%[soundcloud%] (.+):')
+                        if song:match('%d+')~=song then
+                            songName = song:match('.+/(.+)')
+                        end
                     end
                 end
             until s:read()==nil
