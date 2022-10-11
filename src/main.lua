@@ -274,11 +274,7 @@ client:on('messageCreate', function(message)
                 if not s then
                     message:reply('tripped : '..e:split('/')[#e:split('/')])
                 end
-            else
-                message:reply('i will not let you type in dms!!! 😠')
             end
-        else
-            message:reply('command does not exist 👎')
         end
     end
 end)
