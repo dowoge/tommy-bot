@@ -11,3 +11,12 @@ commands:Add('restart',{},"restart bot [dev]", function(t)
         os.execute('luvit ./src/main.lua')
     end
 end)
+commands:Add('leave',{},'leave',function(t)
+    if t.message.author==t.t[1].owner then
+        t.message:delete()
+        local left = t.message.guild:leave()
+        if left then
+            print('left')
+        end
+    end
+end)
