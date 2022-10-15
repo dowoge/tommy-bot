@@ -15,7 +15,7 @@ commands:Add('skill',{},'skill <username|mention|"me"> <game> <style> <sort?=ski
         if not game then return message:reply('invalid game') end
         if not style then return message:reply('invalid style') end
         local sort = args[4]
-        if type(sort)=='string' and sort:lower()~='skill' and sort:lower()~='point' then
+        if type(sort)=='string' and not sort:lower():find('skill') and not sort:lower():find('point') then
             return message:reply('invalid sort option, valid options are "skill" or "point"')
         elseif sort==nil then
             sort = 'skill'
@@ -65,9 +65,9 @@ commands:Add('skill',{},'skill <username|mention|"me"> <game> <style> <sort?=ski
                 test_a=test_a+(count-rank)
                 test_b=test_b+(count-1)
             end
-            table.sort(times,sort=='skill' and function(t1,t2)
+            table.sort(times,sort:find('skill') and function(t1,t2)
                 return t1.SkillRaw<t2.SkillRaw
-            end or sort=='point' and function(t1,t2)
+            end or sort:find('point') and function(t1,t2)
                 return t1.Points<t2.Points
             end)
             local points = 0
