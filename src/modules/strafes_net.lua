@@ -3,7 +3,7 @@ local API = {}
 local API_KEY = require('./apikey.lua')
 local API_HEADER = { {'Content-Type','application/json'}, { 'api-key', API_KEY } }
 local STRAFESNET_API_URL = 'https://api.strafes.net/v1/'
-local ROVER_API_URL = 'https://verify.eryn.io/api/'
+local FIVEMAN_API_URL = 'https://api.fiveman1.net/v1/'
 local ROBLOX_API_URL = 'https://users.roblox.com/v1/'
 local ROBLOX_API_URL2 = 'https://api.roblox.com/'
 local ROBLOX_THUMBNAIL_URL = 'https://thumbnails.roblox.com/v1/'
@@ -220,13 +220,13 @@ function API:GetUserFromAny(user,message)
     elseif user=='me' then
         local me=message.author
         local roblox_user=self:GetRobloxInfoFromDiscordId(me.id)
-        if not roblox_user.id then return 'You are not registered with the RoverAPI' end
+        if not roblox_user.id then return 'You are not registered with the rbhop api' end
         return roblox_user
     elseif user:match('<@%d+>') then
         local user_id=user:match('<@(%d+)>')
         local member=message.guild:getMember(user_id)
         local roblox_user=self:GetRobloxInfoFromDiscordId(member.id)
-        if not roblox_user.id then return 'User is not registered with the RoverAPI' end
+        if not roblox_user.id then return 'User is not registered with the rbhop api' end
         return roblox_user
     else
         local roblox_user=self:GetRobloxInfoFromUsername(user)
@@ -237,7 +237,7 @@ function API:GetUserFromAny(user,message)
 end
 
 
--- [[ ROBLOX / ROVER AND OTHER APIs ]] --
+-- [[ ROBLOX / FIVEMAN AND OTHER APIs ]] --
 
 function API:GetRobloxInfoFromUserId(USER_ID)
     if not USER_ID then return 'empty id' end
@@ -257,9 +257,9 @@ end
 
 function API:GetRobloxInfoFromDiscordId(DISCORD_ID)
     if not DISCORD_ID then return 'empty id' end
-    local response,headers = http_request('GET', ROVER_API_URL..'user/'..DISCORD_ID, API_HEADER)
+    local response,headers = http_request('GET', FIVEMAN_API_URL..'users/'..DISCORD_ID, API_HEADER)
     if not response.robloxId and response.error then return response,headers.error end
-    local response2 = http_request('GET', ROBLOX_API_URL..'users/'..response.robloxId, API_HEADER)
+    local response2 = http_request('GET', ROBLOX_API_URL..'users/'..response.result.robloxId, API_HEADER)
     return response2
 end
 
