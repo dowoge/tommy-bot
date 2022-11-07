@@ -1,7 +1,7 @@
 local discordia=require('discordia')
 local commands=require('./../commands.lua')
 discordia.extensions()
-function wait(n)c=os.clock t=c()while c()-t < n do end;end
+function wait(n)local c=os.clock local t=c()while c()-t < n do end;end
 commands:Add('restart',{},"restart bot [dev]", function(t)
     if t.message.author==t.t[1].owner then
         t.message:addReaction('👍')

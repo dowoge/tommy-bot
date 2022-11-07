@@ -1,6 +1,7 @@
 {
     "robloxLsp.diagnostics.globals": [
         "goto",
-        "nd"
+        "nd",
+        "io"
     ]
 }

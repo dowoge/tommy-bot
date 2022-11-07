@@ -1,6 +1,6 @@
 local http = require('coro-http')
 local json = require('json')
-function wait(n)c=os.clock t=c()while c()-t<=n do end;end
+function wait(n)local c=os.clock local t=c()while c()-t<=n do end;end
 --[[
 1: method
 2: url
