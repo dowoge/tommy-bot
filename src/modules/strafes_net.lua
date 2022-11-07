@@ -220,13 +220,13 @@ function API:GetUserFromAny(user,message)
     elseif user=='me' then
         local me=message.author
         local roblox_user=self:GetRobloxInfoFromDiscordId(me.id)
-        if not roblox_user.id then return 'You are not registered with the rbhop api' end
+        if not roblox_user.id then return 'You are not registered with the fiveman1 api, use !link with the rbhop bot to link your roblox account' end
         return roblox_user
     elseif user:match('<@%d+>') then
         local user_id=user:match('<@(%d+)>')
         local member=message.guild:getMember(user_id)
         local roblox_user=self:GetRobloxInfoFromDiscordId(member.id)
-        if not roblox_user.id then return 'User is not registered with the rbhop api' end
+        if not roblox_user.id then return 'User is not registered with the fiveman1 api, use !link with the rbhop bot to link your roblox account' end
         return roblox_user
     else
         local roblox_user=self:GetRobloxInfoFromUsername(user)
@@ -258,7 +258,7 @@ end
 function API:GetRobloxInfoFromDiscordId(DISCORD_ID)
     if not DISCORD_ID then return 'empty id' end
     local response,headers = http_request('GET', FIVEMAN_API_URL..'users/'..DISCORD_ID, API_HEADER)
-    if not response.result and not response.result.robloxId and response.error then return response,headers.error end
+    if response.status=='error' then return response.messages end
     local response2 = http_request('GET', ROBLOX_API_URL..'users/'..response.result.robloxId, API_HEADER)
     return response2
 end
