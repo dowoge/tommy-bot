@@ -12,7 +12,7 @@ local ROBLOX_THUMBNAIL_URL = 'https://thumbnails.roblox.com/v1/'
 local RANK_CONSTANT_A, RANK_CONSTANT_B, RANK_CONSTANT_C, RANK_CONSTANT_D, RANK_CONSTANT_E = 0.215, 0.595, 0.215, 0.215, 0.71
 
 local t=tostring
-local r=function(n,nd) return tonumber(string.format('%.' .. (nd or 0) .. 'f', n)) end
+local r=function(n,nd) return tonumber(string.format('%.' .. (nd or 0) .. 'f', n))end
 
 local GAMES={BHOP=1,SURF=2,[1]='bhop',[2]='surf'}
 local STATES={[0]='Default',[1]='Whitelisted',[2]='Blacklisted',[3]='Pending'}
