@@ -120,3 +120,13 @@ commands:Add('compare',{},'compare n1 n2', function(t)
     local compared_percent = API.CalculateDifferencePercent(n1,n2)
     message:reply(tostring(compared)..' ('..compared_percent..')')
 end)
+
+commands:Add('calc',{},nil,function(t)
+    local args=t.args
+    local message=t.message
+    local rank = args[1]
+    local count = args[2]
+    local points=API.CalculatePoint(rank,count)
+    local skill=API.FormatSkill(rank == 1 and 1 or (count-rank)/(count-1))
+    message:reply('```Points: '..points..'\nSkill: '..skill..'```')
+end )
