@@ -25,6 +25,18 @@ local commands=require('./../commands.lua')
 "UniverseId":null,
 "Visibility":0}
 ]]
+Badges = {
+    '275640532', --Bhop, pre-group
+    '363928432', --Surf, pre-group
+    '2124614454', --Bhop, post-group
+    '2124615096', --Surf, post-group
+}
+BadgesToName = {
+    [275640532]='old bhop',
+    [363928432]='old surf',
+    [2124614454]='new bhop',
+    [2124615096]='new surf',
+}
 local function round(x,n)
     return string.format('%.'..(n or 0)..'f',x)
 end
@@ -36,7 +48,7 @@ commands:Add('user',{},'user <username|mention|"me">', function(t)
     local user_info=API:GetUserFromAny(user,message)
     if type(user_info)=='string' then return message:reply('```'..user_info..'```') end
     -- for a,b in next,user_info do user_info[a]=tostring(b)end
-    local description = user_info.description=='' and 'null' or user_info.description
+    local description = user_info.description=='' and ' ' or user_info.description
     local created = tostring(date.fromISO(user_info.created):toSeconds())
     local current = date():toSeconds()
     local accountAge = round((current-created)/86400)
@@ -45,13 +57,28 @@ commands:Add('user',{},'user <username|mention|"me">', function(t)
     local name = user_info.name
     local displayName = user_info.displayName
 
-    local onlineStatus_info = API:GetUserOnlineStatus(user_info.id)
+    local onlineStatus_info = API:GetUserOnlineStatus(id)
     
     -- for a,b in next,onlineStatus_info do onlineStatus_info[a]=tostring(b)end
     local LastLocation = onlineStatus_info.LastLocation
     local LastOnline = date.fromISO(onlineStatus_info.LastOnline):toSeconds()+(3600*5)
     
-    local userThumbnail = API:GetUserThumbnail(user_info.id).data[1]
+    local badgeRequest = API:GetBadgesAwardedDates(id,Badges)
+    local badgeData = badgeRequest.data
+
+    local badgesDates = {}
+
+    local firstBadge,firstBadgeDate = 0,math.huge
+    for _,badge in next,badgeData do
+        local badgeId = badge.badgeId
+        local awardedDate = tonumber(date.fromISO(badge.awardedDate):toSeconds())
+        if firstBadgeDate>awardedDate then
+            firstBadge=badgeId
+            firstBadgeDate=awardedDate
+        end
+        badgesDates[badgeId]=awardedDate
+    end
+    local userThumbnail = API:GetUserThumbnail(id).data[1]
 
     local embed = {
         title = displayName..' (@'..name..')',
@@ -69,5 +96,9 @@ commands:Add('user',{},'user <username|mention|"me">', function(t)
             {name='Description',value=description,inline=false},
         }
     }
+    if firstBadge and firstBadgeDate~=math.huge then
+        table.insert(embed.fields,{name='FQG',value=BadgesToName[firstBadge],inline=true})
+        table.insert(embed.fields,{name='Joined',value='<t:'..round(firstBadgeDate)..':R>',inline=true})
+    end
     message:reply({embed=embed})
 end)
