@@ -6,6 +6,7 @@ local STRAFESNET_API_URL = 'https://api.strafes.net/v1/'
 local FIVEMAN_API_URL = 'https://api.fiveman1.net/v1/'
 local ROBLOX_API_URL = 'https://users.roblox.com/v1/'
 local ROBLOX_API_URL2 = 'https://api.roblox.com/'
+local ROBLOX_BADGES_API = 'https://badges.roblox.com/v1/'
 local ROBLOX_THUMBNAIL_URL = 'https://thumbnails.roblox.com/v1/'
 
 
@@ -266,6 +267,14 @@ end
 function API:GetUserOnlineStatus(USER_ID) -- https://api.roblox.com/users/1455906620/onlinestatus
     if not USER_ID then return 'empty id' end
     local response,headers = http_request('GET', ROBLOX_API_URL2..'users/'..USER_ID..'/onlinestatus', API_HEADER)
+    return response,headers
+end
+
+function API:GetBadgesAwardedDates(USER_ID,BADGE_LIST)
+    if not USER_ID then return 'empty id' end
+    local err,res = parseToURLArgs({badgeIds=table.concat(BADGE_LIST,',')})
+    if err then return end
+    local response,headers = http_request('GET',ROBLOX_BADGES_API..'users/'..USER_ID..'/badges/awarded-dates'..res)
     return response,headers
 end
 
