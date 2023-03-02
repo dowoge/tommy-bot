@@ -1,8 +1,11 @@
 local discordia = require('discordia')
+local dcmd = require('discordia-slash')
 local token = require('./modules/token.lua')
 local commands=require('./modules/commands.lua')
 local prefix = ','
 local client = discordia.Client()
+client:useSlashCommands()
+_G.dcmd=dcmd
 _G.client = client
 _G.locked = false
 
@@ -10,6 +13,11 @@ discordia.extensions()
 
 client:on('ready',function()
     commands:INIT()
+    -- for guild in client.guilds:iter() do
+    --     for _,command in next,_G.slashCommands do
+    --         client:createGuildApplicationCommand(guild.id,command)
+    --     end
+    -- end
     local f=io.open('restart.txt','r+'):read()
     local t=tostring(f):split(',')
     if #t==3 then
@@ -27,7 +35,6 @@ client:on('ready',function()
         print('restart.txt is empty or something so probably a first start')
     end
 end)
-
 function parseMentions(message)
     local content=message.content
     local usersMentioned={}
@@ -51,7 +58,7 @@ end
 client:on('messageCreate', function(message)
     if message.author.bot then return end
     local content,mentions=parseMentions(message)
-    if content:sub(1,#prefix)==prefix then
+    if content:sub(1,#prefix)==prefix and content~=prefix then
         local cmd=content:sub(#prefix+1,#content)
         local args=cmd:split(' ')
         local cmdName=args[1]
