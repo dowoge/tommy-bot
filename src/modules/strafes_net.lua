@@ -77,8 +77,20 @@ API.ROBLOX_THUMBNAIL_TYPES = {
 -- use as local err, res = parseToURLArgs(), thanks golang for this idea
 function parseToURLArgs(tb) local function Err(err) return err, nil end local function Ok(res) return nil, res end if not tb then return Err('got nothing') end if type(tb) ~= 'table' then return Err('expected table, got '..type(tb)) end local str = '?' local index = 1 for key, value in pairs(tb) do if index == 1 then str = str..key..'='..t(value) else str = str..'&'..key..'='..t(value) end index = index + 1 end return Ok(str) end
 -- fiveman made these (converted to lua from python)
-function format_helper(a,b)a=tostring(a)while#a<b do a='0'..a end;return a end
-function formatTime(a)if a>86400000 then return'>1 day'end;local c=format_helper(a%1000,3)local d=format_helper(math.floor(a/1000)%60,2)local e=format_helper(math.floor(a/(1000*60))%60,2)local f=format_helper(math.floor(a/(1000*60*60))%24,2)if f=='00'then return e..':'..d..'.'..c else return f..':'..e..':'..d end end
+-- function format_helper(a,b)a=tostring(a)while#a<b do a='0'..a end;return a end
+-- function formatTime(a)if a>86400000 then return'>1 day'end;local c=format_helper(a%1000,3)local d=format_helper(math.floor(a/1000)%60,2)local e=format_helper(math.floor(a/(1000*60))%60,2)local f=format_helper(math.floor(a/(1000*60*60))%24,2)if f=='00'then return e..':'..d..'.'..c else return f..':'..e..':'..d end end
+function formatTime(time) -- chatgpt THIS IS FOR SECONDS! NOT MILLISECONDS
+    local hours = math.floor(time / 3600)
+    local minutes = math.floor((time % 3600) / 60)
+    local seconds = math.floor(time % 60)
+    local milliseconds = math.floor(((time % 1) * 1000)+.5)
+
+    if hours > 0 then
+        return string.format("%02d:%02d:%02d", hours, minutes, seconds)
+    else
+        return string.format("%02d:%02d.%03d", minutes, seconds, milliseconds)
+    end
+end
 
 
 -- [[ STRAFESNET API ]] --
@@ -286,6 +298,26 @@ function API:GetUserThumbnail(USER_ID,TYPE,SIZE) -- https://thumbnails.roblox.co
     local err, res = parseToURLArgs({userIds=USER_ID,size=_SIZE,format='Png',isCircular=false})
     if err then return err end
     local response,headers = http_request('GET', ROBLOX_THUMBNAIL_URL..'users/'.._TYPE..res, API_HEADER)
+    return response,headers
+end
+
+function API:GetGroups(USER_ID)
+    if not USER_ID then return 'empty id' end
+    local response,headers = http_request('GET',string.format(ROBLOX_GROUPS_ROLES_URL,USER_ID))
+    return response,headers
+end
+
+function API:GetSensWithParams(ARGUMENTS)
+    local hasarg = false
+    for _,val in next,ARGUMENTS do
+        if val then
+            hasarg=true
+        end
+    end
+    ARGUMENTS.format='json'
+    local err,res = parseToURLArgs(ARGUMENTS)
+    if err then return err end
+    local response,headers=http_request('GET',ROBLOX_SENS_DB..(hasarg and 'get' or 'get/all')..res)
     return response,headers
 end
 
