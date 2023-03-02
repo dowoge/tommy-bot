@@ -44,11 +44,12 @@ discordia.extensions()
 commands:Add('user',{},'user <username|mention|"me">', function(t)
     local args=t.args
     local message=t.message
-    local user=args[1]
+    local user=args[1] or 'me'
     local user_info=API:GetUserFromAny(user,message)
     if type(user_info)=='string' then return message:reply('```'..user_info..'```') end
-    -- for a,b in next,user_info do user_info[a]=tostring(b)end
-    local description = user_info.description=='' and ' ' or user_info.description
+
+    local description = user_info.description=='' and 'This user has no description' or user_info.description
+    table.foreach(user_info,print)
     local created = tostring(date.fromISO(user_info.created):toSeconds())
     local current = date():toSeconds()
     local accountAge = round((current-created)/86400)
@@ -57,16 +58,16 @@ commands:Add('user',{},'user <username|mention|"me">', function(t)
     local name = user_info.name
     local displayName = user_info.displayName
 
-    local onlineStatus_info = API:GetUserOnlineStatus(id)
+    -- local onlineStatus_info = API:GetUserOnlineStatus(id)
     
-    -- for a,b in next,onlineStatus_info do onlineStatus_info[a]=tostring(b)end
-    local LastLocation = onlineStatus_info.LastLocation
-    local LastOnline = date.fromISO(onlineStatus_info.LastOnline):toSeconds()+(3600*5)
+    -- local LastLocation = onlineStatus_info.LastLocation
+    -- table.foreach(onlineStatus_info.errors[1],print)
+    -- local LastOnline = date.fromISO(onlineStatus_info.LastOnline):toSeconds()+(3600*5)
     
     local badgeRequest = API:GetBadgesAwardedDates(id,Badges)
     local badgeData = badgeRequest.data
 
-    local badgesDates = {}
+    -- local badgesDates = {}
 
     local firstBadge,firstBadgeDate = 0,math.huge
     for _,badge in next,badgeData do
@@ -76,7 +77,7 @@ commands:Add('user',{},'user <username|mention|"me">', function(t)
             firstBadge=badgeId
             firstBadgeDate=awardedDate
         end
-        badgesDates[badgeId]=awardedDate
+        -- badgesDates[badgeId]=awardedDate
     end
     local userThumbnail = API:GetUserThumbnail(id).data[1]
 
@@ -90,8 +91,8 @@ commands:Add('user',{},'user <username|mention|"me">', function(t)
             {name='ID',value=id,inline=true},
             {name='Account Age',value=accountAge..' days',inline=true},
             {name='Created',value='<t:'..round(created)..':R>',inline=true},
-            {name='Last Online',value='<t:'..round(LastOnline)..':R>',inline=true},
-            {name='Last Location',value=LastLocation,inline=true},
+            -- {name='Last Online',value='<t:'..round(LastOnline)..':R>',inline=true},
+            -- {name='Last Location',value=LastLocation,inline=true},
             {name='Banned',value=isBanned,inline=true},
             {name='Description',value=description,inline=false},
         }
