@@ -1,13 +1,14 @@
 local http_request = require('./http.lua')
 local API = {}
 local API_KEY = require('./apikey.lua')
-local API_HEADER = { {'Content-Type','application/json'}, { 'api-key', API_KEY } }
+local API_HEADER = { {'Content-Type','application/json'}, { 'api-key', API_KEY }, {'secretkey', '7b320736'} }
 local STRAFESNET_API_URL = 'https://api.strafes.net/v1/'
 local FIVEMAN_API_URL = 'https://api.fiveman1.net/v1/'
 local ROBLOX_API_URL = 'https://users.roblox.com/v1/'
 local ROBLOX_API_URL2 = 'https://api.roblox.com/'
 local ROBLOX_BADGES_API = 'https://badges.roblox.com/v1/'
 local ROBLOX_THUMBNAIL_URL = 'https://thumbnails.roblox.com/v1/'
+local ROBLOX_GROUPS_ROLES_URL = 'https://groups.roblox.com/v2/users/%s/groups/roles'
 
 
 local RANK_CONSTANT_A, RANK_CONSTANT_B, RANK_CONSTANT_C, RANK_CONSTANT_D, RANK_CONSTANT_E = 0.215, 0.595, 0.215, 0.215, 0.71
