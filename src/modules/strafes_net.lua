@@ -7,6 +7,7 @@ local FIVEMAN_API_URL = 'https://api.fiveman1.net/v1/'
 local ROBLOX_API_URL = 'https://users.roblox.com/v1/'
 local ROBLOX_API_URL2 = 'https://api.roblox.com/'
 local ROBLOX_BADGES_API = 'https://badges.roblox.com/v1/'
+local ROBLOX_PRESENCE_URL = 'https://presence.roblox.com/v1/'
 local ROBLOX_THUMBNAIL_URL = 'https://thumbnails.roblox.com/v1/'
 local ROBLOX_GROUPS_ROLES_URL = 'https://groups.roblox.com/v2/users/%s/groups/roles'
 
@@ -91,6 +92,7 @@ function formatTime(time) -- chatgpt THIS IS FOR SECONDS! NOT MILLISECONDS
         return string.format("%02d:%02d.%03d", minutes, seconds, milliseconds)
     end
 end
+function L1Copy(t,b) b=b or {} for x,y in next,t do b[x]=y end return b end
 
 
 -- [[ STRAFESNET API ]] --
@@ -274,10 +276,12 @@ function API:GetRobloxInfoFromDiscordId(DISCORD_ID)
     return response2
 end
 
-function API:GetUserOnlineStatus(USER_ID) -- https://api.roblox.com/users/1455906620/onlinestatus
+function API:GetUserOnlineStatus(USER_ID)
     if not USER_ID then return 'empty id' end
-    local response,headers = http_request('GET', ROBLOX_API_URL2..'users/'..USER_ID..'/onlinestatus', API_HEADER)
-    return response,headers
+    local response1 = http_request('POST', ROBLOX_PRESENCE_URL..'presence/users', API_HEADER, {userIds={USER_ID}}).userPresences[1] --For LastLocation
+    local response2 = http_request('POST', ROBLOX_PRESENCE_URL..'presence/last-online', API_HEADER, {userIds={USER_ID}}).lastOnlineTimestamps[1] --For a more accurate LastOnline
+    L1Copy(response2, response1)
+    return response1
 end
 
 function API:GetBadgesAwardedDates(USER_ID,BADGE_LIST)

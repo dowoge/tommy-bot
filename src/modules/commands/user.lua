@@ -58,12 +58,13 @@ commands:Add('user',{},'user <username|mention|"me">', function(t)
     local name = user_info.name
     local displayName = user_info.displayName
 
-    -- local onlineStatus_info = API:GetUserOnlineStatus(id)
-    
-    -- local LastLocation = onlineStatus_info.LastLocation
-    -- table.foreach(onlineStatus_info.errors[1],print)
-    -- local LastOnline = date.fromISO(onlineStatus_info.LastOnline):toSeconds()+(3600*5)
-    
+    local onlineStatus_info = API:GetUserOnlineStatus(id)
+    table.foreach(onlineStatus_info,print)
+
+    local LastLocation = onlineStatus_info.lastLocation
+    if onlineStatus_info.userPresenceType==2 then LastLocation="Ingame" end
+    local LastOnline = date.fromISO(onlineStatus_info.lastOnline):toSeconds()+(3600*5)
+
     local badgeRequest = API:GetBadgesAwardedDates(id,Badges)
     local badgeData = badgeRequest.data
 
@@ -91,8 +92,8 @@ commands:Add('user',{},'user <username|mention|"me">', function(t)
             {name='ID',value=id,inline=true},
             {name='Account Age',value=accountAge..' days',inline=true},
             {name='Created',value='<t:'..round(created)..':R>',inline=true},
-            -- {name='Last Online',value='<t:'..round(LastOnline)..':R>',inline=true},
-            -- {name='Last Location',value=LastLocation,inline=true},
+            {name='Last Online',value='<t:'..round(LastOnline)..':R>',inline=true},
+            {name='Last Location',value=LastLocation,inline=true},
             {name='Banned',value=isBanned,inline=true},
             {name='Description',value=description,inline=false},
         }
