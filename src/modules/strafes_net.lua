@@ -85,11 +85,12 @@ function formatTime(time) -- chatgpt THIS IS FOR SECONDS! NOT MILLISECONDS
     local seconds = math.floor(time % 60)
     local milliseconds = math.floor(((time % 1) * 1000)+.5)
 
-    if hours > 0 then
-        return string.format("%02d:%02d:%02d", hours, minutes, seconds)
-    else
-        return string.format("%02d:%02d.%03d", minutes, seconds, milliseconds)
-    end
+    -- if hours > 0 then
+    --     return string.format("%02d:%02d:%02d", hours, minutes, seconds)
+    -- else
+    --     return string.format("%02d:%02d.%03d", minutes, seconds, milliseconds)
+    -- end
+    return string.format(hours and '%02d:%02d:%02d' or '%02d:%02d.%03d', hours and hours or minutes,hours and minutes or seconds, hours and seconds or milliseconds)
 end
 
 
