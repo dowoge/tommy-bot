@@ -13,6 +13,7 @@ local STRAFES_NET_RATELIMIMT = {
 }
 local remaining_timeout = 0
 local function request(method,url,headers,body,options)
+    if type(body)=='table' then body=json.encode(body) end
     local headers,body=http.request(method,url,headers,body,options)
     local rbody=json.decode(body) or body
     local rheaders={}

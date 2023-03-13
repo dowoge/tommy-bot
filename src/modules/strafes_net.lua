@@ -7,6 +7,7 @@ local FIVEMAN_API_URL = 'https://api.fiveman1.net/v1/'
 local ROBLOX_API_URL = 'https://users.roblox.com/v1/'
 local ROBLOX_API_URL2 = 'https://api.roblox.com/'
 local ROBLOX_BADGES_API = 'https://badges.roblox.com/v1/'
+local ROBLOX_PRESENCE_URL = 'https://presence.roblox.com/v1/'
 local ROBLOX_THUMBNAIL_URL = 'https://thumbnails.roblox.com/v1/'
 local ROBLOX_GROUPS_ROLES_URL = 'https://groups.roblox.com/v2/users/%s/groups/roles'
 local ROBLOX_SENS_DB = 'http://oef.ddns.net:9017/rbhop/sens/'
@@ -93,6 +94,7 @@ function formatTime(time) -- chatgpt THIS IS FOR SECONDS! NOT MILLISECONDS
     -- end
     return string.format(hours and '%02d:%02d:%02d' or '%02d:%02d.%03d', hours and hours or minutes,hours and minutes or seconds, hours and seconds or milliseconds)
 end
+function L1Copy(t,b) b=b or {} for x,y in next,t do b[x]=y end return b end
 
 
 -- [[ STRAFESNET API ]] --
@@ -262,13 +264,10 @@ function API:GetRobloxInfoFromUserId(USER_ID)
 end
 
 function API:GetRobloxInfoFromUsername(USERNAME)
-    if not USERNAME then return 'empty id' end
-    local err, res = parseToURLArgs({username=USERNAME})
-    if err then return err end
-    local response,headers = http_request('GET', ROBLOX_API_URL2..'users/get-by-username'..res, API_HEADER)
-    if not response.Id then return 'no user found' end
-    local response2 = http_request('GET', ROBLOX_API_URL..'users/'..response.Id, API_HEADER)
-    return response2
+    if not USERNAME then return 'empty username' end
+    local response,headers = http_request('POST', ROBLOX_API_URL..'usernames/users', API_HEADER, {usernames={USERNAME}})
+    if not response.data[1] then return 'invalid username' end
+    return self:GetRobloxInfoFromUserId(response.data[1].id)
 end
 
 function API:GetRobloxInfoFromDiscordId(DISCORD_ID)
@@ -279,10 +278,12 @@ function API:GetRobloxInfoFromDiscordId(DISCORD_ID)
     return response2
 end
 
-function API:GetUserOnlineStatus(USER_ID) -- https://api.roblox.com/users/1455906620/onlinestatus
+function API:GetUserOnlineStatus(USER_ID)
     if not USER_ID then return 'empty id' end
-    local response,headers = http_request('GET', ROBLOX_API_URL2..'users/'..USER_ID..'/onlinestatus', API_HEADER)
-    return response,headers
+    local response1 = http_request('POST', ROBLOX_PRESENCE_URL..'presence/users', API_HEADER, {userIds={USER_ID}}).userPresences[1] --For LastLocation
+    local response2 = http_request('POST', ROBLOX_PRESENCE_URL..'presence/last-online', API_HEADER, {userIds={USER_ID}}).lastOnlineTimestamps[1] --For a more accurate LastOnline
+    L1Copy(response2, response1)
+    return response1
 end
 
 function API:GetBadgesAwardedDates(USER_ID,BADGE_LIST)
