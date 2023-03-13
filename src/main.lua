@@ -66,11 +66,16 @@ client:on('messageCreate', function(message)
         local command=commands.command_list[cmdName]
         if command~=nil then
             if message.guild~=nil then
-                local s,e=pcall(function()
+                local tb
+                local s,e=xpcall(function()
                     command.exec({message=message,args=args,mentions=mentions,t={client,discordia,token}})
+                end,function(err)
+                    tb = debug.traceback()
+                    return err
                 end)
                 if not s then
                     message:reply('tripped : '..e:split('/')[#e:split('/')])
+                    print(e,tb)
                 end
             end
         end
