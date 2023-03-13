@@ -260,13 +260,10 @@ function API:GetRobloxInfoFromUserId(USER_ID)
 end
 
 function API:GetRobloxInfoFromUsername(USERNAME)
-    if not USERNAME then return 'empty id' end
-    local err, res = parseToURLArgs({username=USERNAME})
-    if err then return err end
-    local response,headers = http_request('GET', ROBLOX_API_URL2..'users/get-by-username'..res, API_HEADER)
-    if not response.Id then return 'no user found' end
-    local response2 = http_request('GET', ROBLOX_API_URL..'users/'..response.Id, API_HEADER)
-    return response2
+    if not USERNAME then return 'empty username' end
+    local response,headers = http_request('POST', ROBLOX_API_URL..'usernames/users', API_HEADER, {usernames={USERNAME}})
+    if not response.data[1] then return 'invalid username' end
+    return self:GetRobloxInfoFromUserId(response.data[1].id)
 end
 
 function API:GetRobloxInfoFromDiscordId(DISCORD_ID)
