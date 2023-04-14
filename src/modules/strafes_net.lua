@@ -9,8 +9,8 @@ local ROBLOX_API_URL2 = 'https://api.roblox.com/'
 local ROBLOX_BADGES_API = 'https://badges.roblox.com/v1/'
 local ROBLOX_PRESENCE_URL = 'https://presence.roblox.com/v1/'
 local ROBLOX_THUMBNAIL_URL = 'https://thumbnails.roblox.com/v1/'
+local ROBLOX_INVENTORY_API = 'https://inventory.roblox.com/v1/'
 local ROBLOX_GROUPS_ROLES_URL = 'https://groups.roblox.com/v2/users/%s/groups/roles'
-local ROBLOX_SENS_DB = 'http://oef.ddns.net:9017/rbhop/sens/'
 
 
 local RANK_CONSTANT_A, RANK_CONSTANT_B, RANK_CONSTANT_C, RANK_CONSTANT_D, RANK_CONSTANT_E = 0.215, 0.595, 0.215, 0.215, 0.71
@@ -291,6 +291,12 @@ function API:GetBadgesAwardedDates(USER_ID,BADGE_LIST)
     local err,res = parseToURLArgs({badgeIds=table.concat(BADGE_LIST,',')})
     if err then return end
     local response,headers = http_request('GET',ROBLOX_BADGES_API..'users/'..USER_ID..'/badges/awarded-dates'..res)
+    return response,headers
+end
+
+function API:GetVerificationItemID(USER_ID)
+    if not USER_ID then return 'empty id' end
+    local response,headers = http_request('GET', ROBLOX_INVENTORY_API..'users/'..USER_ID.."/items/Asset/102611803", API_HEADER)
     return response,headers
 end
 
