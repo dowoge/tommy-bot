@@ -40,6 +40,47 @@ BadgesToName = {
 local function round(x,n)
     return string.format('%.'..(n or 0)..'f',x)
 end
+
+local function FromYMD(ymd)
+    return date.fromISO(ymd.."T00:00:00")[1]
+end
+local function leftpad(s,n,p)
+    return string.rep(p,n-#tostring(s))..s
+end
+local function ToYMD(seconds)
+    return "<t:"..seconds..":R>"
+end
+local IDToDate = { --Terrible ranges but it's all we have
+    -- {1000000000, FromYMD("2006-01-01")}, --I guess?
+    -- {1864564055, FromYMD("2008-08-04")},
+    {3800920136, FromYMD("2016-04-16")},
+    {9855616205, FromYMD("2017-04-02")},
+    {30361018662, FromYMD("2018-11-14")},
+    {32665806459, FromYMD("2019-01-07")},
+    {34758058773, FromYMD("2019-02-24")},
+    {65918261258, FromYMD("2020-06-05")},
+    {171994717435, FromYMD("2023-03-24")},
+    {173210319088, FromYMD("2023-04-14")}
+}
+--We assume linear interpolation since anything more complex I can't process
+
+local function linterp(i1, i2, m)
+    return math.floor(i1 + (i2-i1)*m)
+end
+local function GuessDateFromAssetID(AssetID)
+    for i = #IDToDate, 1, -1 do --Newest to oldest
+        local ID,Time = unpack(IDToDate[i])
+        if ID < AssetID then
+            if not IDToDate[i+1] then
+                return "After "..ToYMD(Time)
+            end
+            local ParentID, ParentTime = unpack(IDToDate[i+1])
+            return "Around "..ToYMD(linterp(Time, ParentTime, (AssetID-ID)/(ParentID-ID)))
+        end
+    end
+    return "Before "..ToYMD(IDToDate[1][2])
+end
+
 discordia.extensions()
 commands:Add('user',{},'user <username|mention|"me">', function(t)
     local args=t.args
@@ -64,6 +105,12 @@ commands:Add('user',{},'user <username|mention|"me">', function(t)
     local LastLocation = onlineStatus_info.lastLocation
     if onlineStatus_info.userPresenceType==2 then LastLocation="Ingame" end
     local LastOnline = date.fromISO(onlineStatus_info.lastOnline):toSeconds()+(3600*5)
+
+    local verificationAssetId = API:GetVerificationItemID(id)
+    local verificationDate = "Not verified"
+    if verificationAssetId.data[1] then
+        verificationDate = GuessDateFromAssetID(verificationAssetId.data[1].instanceId)
+    end
 
     local badgeRequest = API:GetBadgesAwardedDates(id,Badges)
     local badgeData = badgeRequest.data
@@ -92,6 +139,7 @@ commands:Add('user',{},'user <username|mention|"me">', function(t)
             {name='ID',value=id,inline=true},
             {name='Account Age',value=accountAge..' days',inline=true},
             {name='Created',value='<t:'..round(created)..':R>',inline=true},
+            {name='Verified Email',value=verificationDate,inline=true},
             {name='Last Online',value='<t:'..round(LastOnline)..':R>',inline=true},
             {name='Last Location',value=LastLocation,inline=true},
             {name='Banned',value=isBanned,inline=true},
