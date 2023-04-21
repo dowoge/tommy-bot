@@ -11,6 +11,7 @@ local ROBLOX_PRESENCE_URL = 'https://presence.roblox.com/v1/'
 local ROBLOX_THUMBNAIL_URL = 'https://thumbnails.roblox.com/v1/'
 local ROBLOX_INVENTORY_API = 'https://inventory.roblox.com/v1/'
 local ROBLOX_GROUPS_ROLES_URL = 'https://groups.roblox.com/v2/users/%s/groups/roles'
+local ROBLOX_SENS_DB = 'http://oef.ddns.net:9017/rbhop/sens/'
 
 
 local RANK_CONSTANT_A, RANK_CONSTANT_B, RANK_CONSTANT_C, RANK_CONSTANT_D, RANK_CONSTANT_E = 0.215, 0.595, 0.215, 0.215, 0.71
