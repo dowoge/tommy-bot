@@ -108,7 +108,9 @@ commands:Add('user',{},'user <username|mention|"me">', function(t)
 
     local verificationAssetId = API:GetVerificationItemID(id)
     local verificationDate = "Not verified"
-    if verificationAssetId.data[1] then
+    if verificationAssetId.errors then
+        verificationDate = "Failed to fetch"
+    elseif verificationAssetId.data[1] then
         verificationDate = GuessDateFromAssetID(verificationAssetId.data[1].instanceId)
     end
 
