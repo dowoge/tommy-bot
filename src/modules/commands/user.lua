@@ -63,7 +63,6 @@ local IDToDate = { --Terrible ranges but it's all we have
     {173210319088, FromYMD("2023-04-14")}
 }
 --We assume linear interpolation since anything more complex I can't process
-
 local function linterp(i1, i2, m)
     return math.floor(i1 + (i2-i1)*m)
 end
