@@ -39,7 +39,7 @@ commands:Add('sc',{},'download soundcloud song (usage: "sc [link]")', function(t
             local link=args[1]:match('https://soundcloud.com/[%w-_]+/[%w-_]+')
             message:reply('Attempting to download song from <'..link..'>')
             local filepath = ''
-            local s=io.popen('ytdl.exe -o "./tmp/%(fulltitle)s.%(ext)s" '..link)
+            local s=io.popen('ytdl.exe -o "./tmp/%(uploader_id)s-%(display_id)s.%(ext)s" '..link)
             local songName
             repeat
                 local str = s:read()
