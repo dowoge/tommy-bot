@@ -153,7 +153,7 @@ commands:Add('user',{},'user <username|mention|"me">', function(t)
             {name='Last Location',value=LastLocation,inline=true},
             {name='Banned',value=isBanned,inline=true},
             {name='Description',value=description,inline=false},
-            {name='Username History',value=usernameHistoryString,inline=false},
+            {name='Username History ('..#usernameHistoryTable..(#usernameHistoryTable==50 and '*' or '')..')',value=usernameHistoryString,inline=false},
         }
     }
     if firstBadge and firstBadgeDate~=math.huge then
