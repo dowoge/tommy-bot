@@ -99,6 +99,13 @@ commands:Add('user',{},'user <username|mention|"me">', function(t)
     local name = user_info.name
     local displayName = user_info.displayName
 
+    local usernameHistory = API:GetUserUsernameHistory(id).data
+    local usernameHistoryTable = {}
+    for index,usernameObj in next,usernameHistory do
+        table.insert(usernameHistoryTable,usernameObj.name)
+    end
+    local usernameHistoryString = table.concat(usernameHistoryTable,', ')
+
     local onlineStatus_info = API:GetUserOnlineStatus(id)
     table.foreach(onlineStatus_info,print)
 
@@ -146,6 +153,7 @@ commands:Add('user',{},'user <username|mention|"me">', function(t)
             {name='Last Location',value=LastLocation,inline=true},
             {name='Banned',value=isBanned,inline=true},
             {name='Description',value=description,inline=false},
+            {name='Username History',value=usernameHistoryString,inline=false},
         }
     }
     if firstBadge and firstBadgeDate~=math.huge then

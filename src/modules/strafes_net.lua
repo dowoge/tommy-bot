@@ -286,6 +286,14 @@ function API:GetUserOnlineStatus(USER_ID)
     return response1
 end
 
+function API:GetUserUsernameHistory(USER_ID)
+    if not USER_ID then return 'empty id' end
+    local err, res = parseToURLArgs({limit=100})
+    if err then return err end
+    local response1 = http_request('GET', ROBLOX_API_URL..'users/'..USER_ID..'/username-history'..res,API_HEADER)
+    return response1
+end
+
 function API:GetBadgesAwardedDates(USER_ID,BADGE_LIST)
     if not USER_ID then return 'empty id' end
     local err,res = parseToURLArgs({badgeIds=table.concat(BADGE_LIST,',')})
