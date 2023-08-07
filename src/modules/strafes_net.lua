@@ -5,7 +5,6 @@ local API_HEADER = { {'Content-Type','application/json'}, { 'api-key', API_KEY }
 local STRAFESNET_API_URL = 'https://api.strafes.net/v1/'
 local FIVEMAN_API_URL = 'https://api.fiveman1.net/v1/'
 local ROBLOX_API_URL = 'https://users.roblox.com/v1/'
-local ROBLOX_API_URL2 = 'https://api.roblox.com/'
 local ROBLOX_BADGES_API = 'https://badges.roblox.com/v1/'
 local ROBLOX_PRESENCE_URL = 'https://presence.roblox.com/v1/'
 local ROBLOX_THUMBNAIL_URL = 'https://thumbnails.roblox.com/v1/'
