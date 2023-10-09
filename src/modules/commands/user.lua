@@ -90,7 +90,7 @@ commands:Add('user',{},'user <username|mention|"me">', function(t)
     if type(user_info)=='string' then return message:reply('```'..user_info..'```') end
 
     local description = user_info.description=='' and 'This user has no description' or user_info.description
-    table.foreach(user_info,print)
+    -- table.foreach(user_info,print)
     local created = tostring(date.fromISO(user_info.created):toSeconds())
     local current = date():toSeconds()
     local accountAge = round((current-created)/86400)
@@ -99,15 +99,15 @@ commands:Add('user',{},'user <username|mention|"me">', function(t)
     local name = user_info.name
     local displayName = user_info.displayName
 
-    local usernameHistory = API:GetUserUsernameHistory(id).data
+    local usernameHistory = API:GetUserUsernameHistory(id).data or {}
     local usernameHistoryTable = {}
     for index,usernameObj in next,usernameHistory do
         table.insert(usernameHistoryTable,usernameObj.name)
     end
     local usernameHistoryString = table.concat(usernameHistoryTable,', ')
 
-    local onlineStatus_info = API:GetUserOnlineStatus(id)
-    table.foreach(onlineStatus_info,print)
+    local onlineStatus_info = API:GetUserOnlineStatus(id) or {lastLocation="Unknown", lastOnline=0, userPresenceType=-1}
+    -- table.foreach(onlineStatus_info,print)
 
     local LastLocation = onlineStatus_info.lastLocation
     if onlineStatus_info.userPresenceType==2 then LastLocation="Ingame" end
