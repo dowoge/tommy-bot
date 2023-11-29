@@ -111,7 +111,7 @@ commands:Add('user',{},'user <username|mention|"me">', function(t)
 
     local LastLocation = onlineStatus_info.lastLocation
     if onlineStatus_info.userPresenceType==2 then LastLocation="Ingame" end
-    local LastOnline = date.fromISO(onlineStatus_info.lastOnline):toSeconds()+(3600*5)
+    local LastOnline = date.fromISO(onlineStatus_info.lastOnline):toSeconds()
 
     local verificationAssetId = API:GetVerificationItemID(id)
     local verificationDate = "Not verified"
