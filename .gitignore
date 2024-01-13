@@ -3,7 +3,6 @@ gateway.json
 apikey.lua
 token.lua
 deps
-minecraft_data/*
-minecraft.lua
 sensdb.lua
+minecraft_data.json
 .gitignore
