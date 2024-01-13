@@ -8,7 +8,7 @@ commands:Add('restart',{},"restart bot [dev]", function(t)
         t.t[1]:stop()
         wait(1.5)
         io.open('restart.txt','w+'):write(t.message.guild.id..','..t.message.channel.id..','..t.message.id):close()
-        os.execute('luvit ./src/main.lua')
+        os.execute('.\\exes\\luvit ./src/main.lua')
     end
 end)
 commands:Add('leave',{},'leave',function(t)
