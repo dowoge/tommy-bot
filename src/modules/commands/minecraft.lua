@@ -27,7 +27,7 @@ Commands:Add('setip',{},'set ip for status',function(CommandData)
 		return CommandMessage:reply('No IP provided')
 	end
 
-	local ServerIP=ServerIPStr:match("(%d+%.%d+%.%d+%.%d+)")
+	local ServerIP=ServerIPStr:match("(%d+%.%d+%.%d+%.%d+)") or ServerIPStr:match("(%w*%.?%w+%.%w+)")
 	if not ServerIP then
 		return CommandMessage:reply('Invalid server IP')
 	end
