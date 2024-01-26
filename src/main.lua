@@ -13,11 +13,6 @@ discordia.extensions()
 
 client:on('ready',function()
     commands:INIT()
-    -- for guild in client.guilds:iter() do
-    --     for _,command in next,_G.slashCommands do
-    --         client:createGuildApplicationCommand(guild.id,command)
-    --     end
-    -- end
     local f=io.open('restart.txt','r+'):read()
     local t=tostring(f):split(',')
     if #t==3 then
