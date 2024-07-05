@@ -13,3 +13,9 @@ return 'key'
 3. Run `start.bat` to start the bot.
 
 ###### Note: `token.lua` should be your discord login bot token and `apikey.lua` should be your StrafesNET API key.
+
+### T.O.S.
+TBD
+
+### PRIVACY POLICY
+TBD
