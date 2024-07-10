@@ -1,80 +1,45 @@
-local discordia = require('discordia')
-local dcmd = require('discordia-slash')
-local token = require('./modules/token.lua')
-local commands=require('./modules/commands.lua')
-local prefix = ','
-local client = discordia.Client()
-client:useSlashCommands()
-_G.dcmd=dcmd
-_G.client = client
-_G.locked = false
+local Discordia = require('discordia')
+local DiscordiaSlash = require('discordia-slash')
+local Token = require('./Modules/Token.lua')
+local CommandCollector = require('./Modules/CommandCollector.lua')
+local Client = Discordia.Client():useApplicationCommands()
+Discordia.extensions()
 
-discordia.extensions()
+local MessageCommandCollector = CommandCollector.new('Message'):Collect()
+local SlashCommandCollector = CommandCollector.new('Slash'):Collect()
+local UserCommandCollector = CommandCollector.new('User'):Collect()
 
-client:on('ready',function()
-    commands:INIT()
-    local f=io.open('restart.txt','r+'):read()
-    local t=tostring(f):split(',')
-    if #t==3 then
-        client:getGuild(t[1]):getChannel(t[2]):send(
-            {
-                content='bot ready',
-                reference={
-                    message=client:getChannel(t[2]):getMessage(t[3]),
-                    mention=true
-                }
-            }
-        )
-        io.open('restart.txt','w+'):write(''):close()
-    else
-        print('restart.txt is empty or something so probably a first start')
-    end
+Client:on('ready', function()
+    -- local GlobalCommands = Client:getGlobalApplicationCommands()
+
+    -- for CommandId in pairs(GlobalCommands) do
+    --     Client:deleteGlobalApplicationCommand(CommandId)
+    -- end
+
+    MessageCommandCollector:Publish(Client)
+    SlashCommandCollector:Publish(Client)
+    UserCommandCollector:Publish(Client)
 end)
-function parseMentions(message)
-    local content=message.content
-    local usersMentioned={}
-    if #message.mentionedUsers>0 then
-        for user in message.mentionedUsers:iter() do
-            usersMentioned[user.id]=user
-        end
-    end
-    local msgSplit=content:split(' ')
-    for i,v in next, msgSplit do
-        if v:match('<@![0-9]+>') then
-            local id=v:match('<@!([0-9]+)>')
-            if usersMentioned[id] then
-                msgSplit[i]=usersMentioned[id].mentionString
-            end
-        end
-    end
-    return table.concat(msgSplit,' ') or '',usersMentioned
-end
 
-client:on('messageCreate', function(message)
-    if message.author.bot then return end
-    local content,mentions=parseMentions(message)
-    if content:sub(1,#prefix)==prefix and content~=prefix then
-        local cmd=content:sub(#prefix+1,#content)
-        local args=cmd:split(' ')
-        local cmdName=args[1]
-        table.remove(args,1)
-        local command=commands.command_list[cmdName]
-        if command~=nil then
-            if message.guild~=nil then
-                local tb
-                local s,e=xpcall(function()
-                    command.exec({message=message,args=args,mentions=mentions,t={client,discordia,token}})
-                end,function(err)
-                    tb = debug.traceback()
-                    return err
-                end)
-                if not s then
-                    message:reply('tripped : '..e:split('/')[#e:split('/')])
-                    print(e,tb)
-                end
-            end
-        end
+Client:on('slashCommand', function(Interaction, Command, Args)
+    local SlashCommand = SlashCommandCollector:Get(Command.name)
+    if SlashCommand then
+        SlashCommand.Callback(Interaction, Command, Args)
     end
 end)
 
-client:run('Bot '..token)
+Client:on('messageCommand', function(Interaction, Command, Message)
+    local MessageCommand = MessageCommandCollector:Get(Command.name)
+    if MessageCommand then
+        MessageCommand.Callback(Interaction, Command, Message)
+    end
+end)
+
+Client:on('userCommand', function(Interaction, Command, Member)
+    local UserCommand = UserCommandCollector:Get(Command.name)
+    if UserCommand then
+        UserCommand.Callback(Interaction, Command, Member)
+    end
+end)
+
+Client:run('Bot '..Token)

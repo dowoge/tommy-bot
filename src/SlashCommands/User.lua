@@ -1,30 +1,21 @@
-local discordia=require('discordia')
-local date = discordia.Date
-local API=require('./../strafes_net.lua')
-local commands=require('./../commands.lua')
---[[
-    {
-  "description": "string",
-  "created": "2022-08-22T02:55:01.607Z",
-  "isBanned": true,
-  "externalAppDisplayName": "string",
-  "hasVerifiedBadge": true,
-  "id": 0,
-  "name": "string",
-  "displayName": "string"
-}]]
---[[
-{"GameId":null,
-"IsOnline":false,
-"LastLocation":"Offline",
-"LastOnline":"2022-08-21T22:32:23.4-05:00",
-"LocationType":2,
-"PlaceId":null,
-"VisitorId":1455906620,
-"PresenceType":0,
-"UniverseId":null,
-"Visibility":0}
-]]
+local SlashCommandTools = require('discordia-slash').util.tools()
+
+local Discordia = require('discordia')
+local Date = Discordia.Date
+Discordia.extensions()
+
+local API = require('../Modules/strafes_net.lua')
+
+local UserCommand = SlashCommandTools.slashCommand('user', 'Looks up specified user on Roblox')
+
+local UsernameOption = SlashCommandTools.string('username', 'Username to look up')
+local UserIdOption = SlashCommandTools.integer('user_id', 'User ID to look up')
+local MemberOption = SlashCommandTools.user('member', 'User to look up')
+
+UserCommand:addOption(UsernameOption)
+UserCommand:addOption(UserIdOption)
+UserCommand:addOption(MemberOption)
+
 Badges = {
     '275640532', --Bhop, pre-group
     '363928432', --Surf, pre-group
@@ -42,7 +33,7 @@ local function round(x,n)
 end
 
 local function FromYMD(ymd)
-    return date.fromISO(ymd.."T00:00:00")[1]
+    return Date.fromISO(ymd.."T00:00:00")[1]
 end
 local function leftpad(s,n,p)
     return string.rep(p,n-#tostring(s))..s
@@ -84,18 +75,30 @@ local function GuessDateFromAssetID(AssetID)
     return "Before "..ToYMD(IDToDate[1][2])
 end
 
-discordia.extensions()
-commands:Add('user',{},'user <username|mention|"me">', function(t)
-    local args=t.args
-    local message=t.message
-    local user=args[1] or 'me'
-    local user_info=API:GetUserFromAny(user,message)
-    if type(user_info)=='string' then return message:reply('```'..user_info..'```') end
+local function Callback(Interaction, Command, Args)
+	local user_info
+	if Args then
+		local username = Args.username
+		local user_id = Args.user_id
+		local member = Args.member
+		if username then
+			user_info = API:GetRobloxInfoFromUsername(username)
+		elseif user_id then
+			user_info = API:GetRobloxInfoFromUserId(user_id)
+		elseif member then
+			user_info = API:GetRobloxInfoFromDiscordId(member.id)
+		end
+	else
+		local user = Interaction.member or Interaction.user
+		if user then
+			user_info = API:GetRobloxInfoFromDiscordId(user.id)
+		end
+	end
 
     local description = user_info.description=='' and 'This user has no description' or user_info.description
     -- table.foreach(user_info,print)
-    local created = tostring(date.fromISO(user_info.created):toSeconds())
-    local current = date():toSeconds()
+    local created = tostring(Date.fromISO(user_info.created):toSeconds())
+    local current = Date():toSeconds()
     local accountAge = round((current-created)/86400)
     local isBanned = user_info.isBanned
     local id = user_info.id
@@ -114,7 +117,7 @@ commands:Add('user',{},'user <username|mention|"me">', function(t)
 
     local LastLocation = onlineStatus_info.lastLocation
     if onlineStatus_info.userPresenceType==2 then LastLocation="Ingame" end
-    local LastOnline = date.fromISO(onlineStatus_info.lastOnline):toSeconds()
+    local LastOnline = Date.fromISO(onlineStatus_info.lastOnline):toSeconds()
 
     local verificationAssetId = API:GetVerificationItemID(id)
     local verificationDate = "Not verified"
@@ -132,7 +135,7 @@ commands:Add('user',{},'user <username|mention|"me">', function(t)
     local firstBadge,firstBadgeDate = 0,math.huge
     for _,badge in next,badgeData do
         local badgeId = badge.badgeId
-        local awardedDate = tonumber(date.fromISO(badge.awardedDate):toSeconds())
+        local awardedDate = tonumber(Date.fromISO(badge.awardedDate):toSeconds())
         if firstBadgeDate>awardedDate then
             firstBadge=badgeId
             firstBadgeDate=awardedDate
@@ -163,5 +166,10 @@ commands:Add('user',{},'user <username|mention|"me">', function(t)
         table.insert(embed.fields,{name='FQG',value=BadgesToName[firstBadge],inline=true})
         table.insert(embed.fields,{name='Joined',value='<t:'..round(firstBadgeDate)..':R>',inline=true})
     end
-    message:reply({embed=embed})
-end)
+    Interaction:reply({embed=embed})
+end
+
+return {
+	Command = UserCommand,
+	Callback = Callback
+}
