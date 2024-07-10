@@ -21,24 +21,31 @@ Client:on('ready', function()
     UserCommandCollector:Publish(Client)
 end)
 
+local function RunCallback(Callback, Interaction, Command, Args)
+    local Success, Return = pcall(Callback, Interaction, Command, Args)
+    if not Success then
+        Interaction:reply('Error encountered when trying to run command: '..Return, true)
+    end
+end
+
 Client:on('slashCommand', function(Interaction, Command, Args)
     local SlashCommand = SlashCommandCollector:Get(Command.name)
     if SlashCommand then
-        SlashCommand.Callback(Interaction, Command, Args)
+        RunCallback(SlashCommand.Callback, Interaction, Command, Args)
     end
 end)
 
 Client:on('messageCommand', function(Interaction, Command, Message)
     local MessageCommand = MessageCommandCollector:Get(Command.name)
     if MessageCommand then
-        MessageCommand.Callback(Interaction, Command, Message)
+        RunCallback(MessageCommand.Callback, Interaction, Command, Message)
     end
 end)
 
 Client:on('userCommand', function(Interaction, Command, Member)
     local UserCommand = UserCommandCollector:Get(Command.name)
     if UserCommand then
-        UserCommand.Callback(Interaction, Command, Member)
+        RunCallback(UserCommand.Callback, Interaction, Command, Member)
     end
 end)
 

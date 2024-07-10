@@ -94,6 +94,9 @@ local function Callback(Interaction, Command, Args)
 			user_info = API:GetRobloxInfoFromDiscordId(user.id)
 		end
 	end
+    if not user_info.id then
+        return error('stop doing that')
+    end
 
     local description = user_info.description=='' and 'This user has no description' or user_info.description
     -- table.foreach(user_info,print)
