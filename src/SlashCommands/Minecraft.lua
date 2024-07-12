@@ -1,11 +1,14 @@
 local Discordia = require('discordia')
 local json = require('json')
 local http_request = require('../Modules/http.lua')
+local SubCommandHandler = require('../Modules/SubCommandHandler.lua')
 Discordia.extensions()
 
 local ApplicationCommandOptionTypes = Discordia.enums.appCommandOptionType
 
 local SlashCommandTools = require('discordia-slash').util.tools()
+
+local MinecraftSubCommandHandler = SubCommandHandler.new()
 
 local MinecraftMainCommand = SlashCommandTools.slashCommand('minecraft', 'Minecraft server related commands')
 
@@ -34,8 +37,7 @@ if MinecraftDataFile then
 	MinecraftDataFile:close()
 end
 
-local SubCommandCallbacks = {}
-local function Status(Interaction, Command, Args)
+MinecraftSubCommandHandler:AddSubCommand(MinecraftStatusSubCommand.name, function(Interaction, Command, Args)
 	local GuildId = Interaction.guild and Interaction.guild.id
 	if not GuildId then
 		return Interaction:reply('You cannot use this command outside of a Discord server', true)
@@ -91,9 +93,9 @@ local function Status(Interaction, Command, Args)
 		}
 	end
 	return Interaction:reply({embed = EmbedData})
-end
+end)
 
-local function SetIp(Interaction, Command, Args)
+MinecraftSubCommandHandler:AddSubCommand(MinecraftSetIpSubCommand.name, function(Interaction, Command, Args)
 	local ServerIPStr = Args.ip
 
 	local GuildId = Interaction.guild and Interaction.guild.id
@@ -114,25 +116,9 @@ local function SetIp(Interaction, Command, Args)
 	io.open('minecraft_data.json','w+'):write(json.encode(GlobalMinecraftData)):close()
 
 	return Interaction:reply('Successfully added `'..ServerIP..':'..ServerPort..'` for ServerId='..GuildId)
-end
-SubCommandCallbacks.status = Status
-SubCommandCallbacks.setip = SetIp
-
-
-
-local function Callback(Interaction, Command, Args)
-	local SubCommandOption = Command.options[1]
-	if SubCommandOption.type == ApplicationCommandOptionTypes.subCommand then
-		local SubCommandName = SubCommandOption.name
-		local SubCommandCallback = SubCommandCallbacks[SubCommandName]
-		local SubCommandArgs = Args[SubCommandName]
-		if SubCommandCallback then
-			SubCommandCallback(Interaction, Command, SubCommandArgs)
-		end
-	end
-end
+end)
 
 return {
 	Command = MinecraftMainCommand,
-	Callback = Callback
+	Callback = MinecraftSubCommandHandler:GetMainCommandCallback()
 }
