@@ -130,7 +130,6 @@ local function Callback(Interaction, Command, Args)
 			SubCommandCallback(Interaction, Command, SubCommandArgs)
 		end
 	end
-
 end
 
 return {
