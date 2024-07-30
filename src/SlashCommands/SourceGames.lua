@@ -2,7 +2,7 @@ local SlashCommandTools = require('discordia-slash').util.tools()
 
 local SubCommandHandler = require('../Modules/SubCommandHandler.lua')
 
-local SOURCE_DEFAULT_M_YAW = 0.022
+local SOURCE_DEFAULT_M_YAW = 0.022 -- this is from experience (i just looked in the console)
 
 local SourceSubCommandHandler = SubCommandHandler.new()
 local SourceMainCommand = SlashCommandTools.slashCommand('source', 'Utility commands for source games (CS:S specifically)')
