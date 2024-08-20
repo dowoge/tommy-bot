@@ -10,12 +10,6 @@ local SlashCommandCollector = CommandCollector.new('Slash'):Collect()
 local UserCommandCollector = CommandCollector.new('User'):Collect()
 
 Client:on('ready', function()
-    -- local GlobalCommands = Client:getGlobalApplicationCommands()
-
-    -- for CommandId in pairs(GlobalCommands) do
-    --     Client:deleteGlobalApplicationCommand(CommandId)
-    -- end
-
     MessageCommandCollector:Publish(Client)
     SlashCommandCollector:Publish(Client)
     UserCommandCollector:Publish(Client)
