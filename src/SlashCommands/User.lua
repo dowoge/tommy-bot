@@ -95,7 +95,7 @@ local function Callback(Interaction, Command, Args)
 		end
 	end
     if not user_info.id then
-        return error('stop doing that')
+        return error(user_info)
     end
 
     local description = user_info.description=='' and 'This user has no description' or user_info.description

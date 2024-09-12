@@ -265,8 +265,9 @@ end
 
 function API:GetRobloxInfoFromUsername(USERNAME)
     if not USERNAME then return 'empty username' end
+    if #USERNAME > 32 then return 'Username too long' end
     local response,headers = http_request('POST', ROBLOX_API_URL..'usernames/users', API_HEADER, {usernames={USERNAME}})
-    if not response.data[1] then return 'invalid username' end
+    if not response.data[1] then return 'Username \''..USERNAME..'\' not found.' end
     return self:GetRobloxInfoFromUserId(response.data[1].id)
 end
 
