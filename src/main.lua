@@ -16,10 +16,13 @@ Client:on('ready', function()
 end)
 
 local function RunCallback(Callback, Interaction, Command, Args)
-    local Success, Return = pcall(Callback, Interaction, Command, Args)
-    if not Success then
-        Interaction:reply('Error encountered when trying to run command: '..tostring(Return), true)
-    end
+	local Success, Return = pcall(Callback, Interaction, Command, Args)
+	if not Success then
+		if type(Return) == "table" then
+			table.foreach(Return, print)
+		end
+	    Interaction:reply('Error encountered when trying to run command: '..tostring(Return), true)
+	end
 end
 
 Client:on('slashCommand', function(Interaction, Command, Args)
