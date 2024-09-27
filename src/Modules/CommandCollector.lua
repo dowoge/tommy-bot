@@ -30,7 +30,7 @@ function CommandCollector:Collect()
 
 	local CommandsContainerPath = self.Prefix..'Commands/'
 
-	for File in io.popen('dir "./src/'..CommandsContainerPath..'" /b'):lines() do
+	for File in io.popen('ls ./src/'..CommandsContainerPath):lines() do
 		if File:sub(1, 1) ~= IGNORE_STARTING_FILE_NAME then
 			local Success, Return = pcall(require, RELATIVE_PATH_TO_COMMANDS..CommandsContainerPath..File)
 			if Success then
