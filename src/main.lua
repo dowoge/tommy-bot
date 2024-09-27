@@ -18,7 +18,7 @@ end)
 local function RunCallback(Callback, Interaction, Command, Args)
     local Success, Return = pcall(Callback, Interaction, Command, Args)
     if not Success then
-        Interaction:reply('Error encountered when trying to run command: '..Return, true)
+        Interaction:reply('Error encountered when trying to run command: '..tostring(Return), true)
     end
 end
 
