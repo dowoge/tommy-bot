@@ -76,26 +76,33 @@ local function GuessDateFromAssetID(AssetID)
 end
 
 local function Callback(Interaction, Command, Args)
+	print("Debugging on prod 1")
 	local user_info
 	if Args then
 		local username = Args.username
 		local user_id = Args.user_id
 		local member = Args.member
 		if username then
+		print("Debugging on prod 2")
 			user_info = API:GetRobloxInfoFromUsername(username)
 		elseif user_id then
+		print("Debugging on prod 3")
 			user_info = API:GetRobloxInfoFromUserId(user_id)
 		elseif member then
+		print("Debugging on prod 4")
 			user_info = API:GetRobloxInfoFromDiscordId(member.id)
 		end
 	else
+	print("Debugging on prod 5")
 		local user = Interaction.member or Interaction.user
 		if user then
 			user_info = API:GetRobloxInfoFromDiscordId(user.id)
 		end
 	end
+	print("Debugging on prod 6")
     if not user_info.id then
-        error(user_info)
+    print("Debugging on prod 7")
+        return error(user_info)
     end
 
     local description = user_info.description=='' and 'This user has no description' or user_info.description
