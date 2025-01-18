@@ -115,7 +115,7 @@ local function Callback(Interaction, Command, Args)
     end
     local usernameHistoryString = table.concat(usernameHistoryTable,', ')
 
-    local onlineStatus_info = API:GetUserOnlineStatus(id) or {lastLocation="Unknown", lastOnline=0, userPresenceType=-1}
+    local onlineStatus_info = {lastLocation="Unknown", lastOnline=0, userPresenceType=-1}
     -- table.foreach(onlineStatus_info,print)
 
     local LastLocation = onlineStatus_info.lastLocation
