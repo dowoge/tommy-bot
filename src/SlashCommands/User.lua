@@ -120,7 +120,7 @@ local function Callback(Interaction, Command, Args)
 
     local LastLocation = onlineStatus_info.lastLocation
     if onlineStatus_info.userPresenceType==2 then LastLocation="Ingame" end
-    local LastOnline = Date.fromISO(onlineStatus_info.lastOnline):toSeconds()
+    local LastOnline = 0--Date.fromISO(onlineStatus_info.lastOnline):toSeconds()
 
     local verificationAssetId = API:GetVerificationItemID(id)
     local verificationDate = "Not verified"
