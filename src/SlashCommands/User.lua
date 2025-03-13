@@ -55,7 +55,8 @@ local IDToDate = { --Terrible ranges but it's all we have
     {206368884641, FromYMD("2023-07-16")},
     {229093879745, FromYMD("2024-01-02")},
     {232802028144, FromYMD("2024-04-08")},
-    {234886704167, FromYMD("2024-06-28")}
+    {234886704167, FromYMD("2024-06-28")},
+    {241580400713, FromYMD("2025-02-16")},
 }
 --We assume linear interpolation since anything more complex I can't process
 local function linterp(i1, i2, m)
