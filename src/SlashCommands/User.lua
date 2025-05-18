@@ -71,13 +71,19 @@ local function GuessDateFromAssetID(InstanceID, AssetID)
         local ID,Time = unpack(IDToDate[i])
         if ID < InstanceID then
             if not IDToDate[i+1] then
-                return "After "..ToYMD(Time)
+                -- Screw it we ball, just do unjustified interpolation
+                local ID1, Time1 = unpack(IDToDate[#IDToDate-1])
+                local ID2, Time2 = unpack(IDToDate[#IDToDate])
+                return "Around "..ToYMD(linterp(Time1, Time2, (InstanceID-ID1)/(ID2-ID1)))..note
             end
             local ParentID, ParentTime = unpack(IDToDate[i+1])
             return "Around "..ToYMD(linterp(Time, ParentTime, (InstanceID-ID)/(ParentID-ID)))..note
         end
     end
-    return "Before "..ToYMD(IDToDate[1][2])
+    -- Screw it we ball, just do unjustified interpolation
+    local ID1, Time1 = unpack(IDToDate[1])
+    local ID2, Time2 = unpack(IDToDate[2])
+    return "Around "..ToYMD(linterp(Time1, Time2, (InstanceID-ID1)/(ID2-ID1)))..note
 end
 
 local function Callback(Interaction, Command, Args)
