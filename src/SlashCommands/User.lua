@@ -62,15 +62,19 @@ local IDToDate = { --Terrible ranges but it's all we have
 local function linterp(i1, i2, m)
     return math.floor(i1 + (i2-i1)*m)
 end
-local function GuessDateFromAssetID(AssetID)
+local function GuessDateFromAssetID(InstanceID, AssetID)
+    local note = ""
+    if AssetID == 1567446 then
+        note = " (Verification Sign)"
+    end
     for i = #IDToDate, 1, -1 do --Newest to oldest
         local ID,Time = unpack(IDToDate[i])
-        if ID < AssetID then
+        if ID < InstanceID then
             if not IDToDate[i+1] then
                 return "After "..ToYMD(Time)
             end
             local ParentID, ParentTime = unpack(IDToDate[i+1])
-            return "Around "..ToYMD(linterp(Time, ParentTime, (AssetID-ID)/(ParentID-ID)))
+            return "Around "..ToYMD(linterp(Time, ParentTime, (InstanceID-ID)/(ParentID-ID)))..note
         end
     end
     return "Before "..ToYMD(IDToDate[1][2])
@@ -128,7 +132,13 @@ local function Callback(Interaction, Command, Args)
     if verificationAssetId.errors then
         verificationDate = "Failed to fetch"
     elseif verificationAssetId.data[1] then
-        verificationDate = GuessDateFromAssetID(verificationAssetId.data[1].instanceId)
+        verificationDate = ""
+        for i, data in next, verificationAssetId.data do
+            verificationDate = verificationDate .. GuessDateFromAssetID(data.instanceId, data.id)
+            if i ~= #verificationAssetId.data then
+                verificationDate = verificationDate .. "\n"
+            end
+        end
     end
 
     local badgeRequest = API:GetBadgesAwardedDates(id,Badges)
