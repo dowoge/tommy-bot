@@ -305,8 +305,14 @@ end
 
 function API:GetVerificationItemID(USER_ID)
     if not USER_ID then return 'empty id' end
-    local response,headers = http_request('GET', ROBLOX_INVENTORY_API..'users/'..USER_ID.."/items/Asset/102611803", API_HEADER)
-    return response,headers
+    local response1,headers1 = http_request('GET', ROBLOX_INVENTORY_API..'users/'..USER_ID.."/items/Asset/102611803", API_HEADER)
+    if response1.errors then return response1,headers1 end
+    local response2,headers2 = http_request('GET', ROBLOX_INVENTORY_API..'users/'..USER_ID.."/items/Asset/1567446", API_HEADER)
+    if response2.errors then return response2,headers2 end
+    local data = {}
+    data[#data+1] = response2.data[1] -- Do the older item first if present
+    data[#data+1] = response1.data[1]
+    return {data=data},headers1
 end
 
 function API:GetUserThumbnail(USER_ID,TYPE,SIZE) -- https://thumbnails.roblox.com/v1/users/avatar?userIds=1455906620&size=180x180&format=Png&isCircular=false
