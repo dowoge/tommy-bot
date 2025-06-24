@@ -1,6 +1,6 @@
 discordia.log
 gateway.json
-apikey.lua
+APIKeys.lua
 Token.lua
 deps
 sensdb.lua
