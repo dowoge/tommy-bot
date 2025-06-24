@@ -14,7 +14,7 @@ local function QueryParams(Params) -- {Name = Value, ...}
 
     for ParamName, ParamValue in next, Params do
         if ParamValue ~= nil then
-            QueryString = QueryString .. ParamName .. "=" .. ParamValue .. "&"
+            QueryString = QueryString .. tostring(ParamName) .. "=" .. tostring(ParamValue) .. "&"
         end
     end
 
@@ -22,10 +22,11 @@ local function QueryParams(Params) -- {Name = Value, ...}
 end
 
 local function CreateHeaders(Headers) -- {Name = Value, ...}
+    if not Headers then return {} end
     local RequestHeaders = {}
 
     for HeaderName, HeaderValue in next, Headers do
-        RequestHeaders[#RequestHeaders + 1] = { HeaderName, HeaderValue }
+        RequestHeaders[#RequestHeaders + 1] = { tostring(HeaderName), tostring(HeaderValue) }
     end
 
     return RequestHeaders
@@ -49,7 +50,7 @@ local function NormalizeHeaders(Response)
     end
 end
 
-local function Request(Method, Url, Params, Headers, Callback)
+local function Request(Method, Url, Params, RequestHeaders, RequestBody, Callback)
     if not METHODS[Method] then
         error("[HTTP] Method " .. Method .. " is not supported.")
     end
@@ -58,23 +59,27 @@ local function Request(Method, Url, Params, Headers, Callback)
         error("[HTTP] Url is not a string")
     end
 
-    local QueryString = QueryParams(Params)       -- at worse (I think), this is an empty string (which cannot mess up the request)
+    if type(RequestBody) == "table" then
+        RequestBody = json.encode(RequestBody)
+    end
 
-    local RequestHeaders = CreateHeaders(Headers) -- At worse, this will just be an empty table (which cannot mess up the request)
+    local QueryString = QueryParams(Params)                -- at worse (I think), this is an empty string (which cannot mess up the request)
+
+    local FormattedHeaders = CreateHeaders(RequestHeaders) -- At worse, this will just be an empty table (which cannot mess up the request)
 
     local RequestUrl = Url .. QueryString
     print(RequestUrl)
 
     if Callback and type(Callback) == "function" then
         return coroutine.wrap(function()
-            local Response, Body = HTTPRequest(Method, RequestUrl, RequestHeaders)
-            NormalizeHeaders(Response)
-            Callback(Response, TryDecodeJson(Body))
+            local Headers, Body = HTTPRequest(Method, RequestUrl, FormattedHeaders, RequestBody)
+            NormalizeHeaders(Headers)
+            Callback(Headers, TryDecodeJson(Body))
         end)
     else
-        local Response, Body = HTTPRequest(Method, RequestUrl, RequestHeaders)
-        NormalizeHeaders(Response)
-        return Response, TryDecodeJson(Body)
+        local Headers, Body = HTTPRequest(Method, RequestUrl, FormattedHeaders, RequestBody)
+        NormalizeHeaders(Headers)
+        return Headers, TryDecodeJson(Body)
     end
 end
 
