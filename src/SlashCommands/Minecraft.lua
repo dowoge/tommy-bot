@@ -1,6 +1,7 @@
 local Discordia = require('discordia')
 local json = require('json')
-local http_request = require('../Modules/http.lua')
+local HttpRequest = require('../Modules/HttpRequest.lua')
+local Request = HttpRequest.Request
 local SubCommandHandler = require('../Modules/SubCommandHandler.lua')
 Discordia.extensions()
 
@@ -12,8 +13,10 @@ local MinecraftSubCommandHandler = SubCommandHandler.new()
 
 local MinecraftMainCommand = SlashCommandTools.slashCommand('minecraft', 'Minecraft server related commands')
 
-local MinecraftStatusSubCommand = SlashCommandTools.subCommand('status', 'Get the Minecraft server status according to the preferred IP address set for this server')
-local MinecraftSetIpSubCommand = SlashCommandTools.subCommand('setip', 'Set the preferred Minecraft server IP address for this server')
+local MinecraftStatusSubCommand = SlashCommandTools.subCommand('status',
+	'Get the Minecraft server status according to the preferred IP address set for this server')
+local MinecraftSetIpSubCommand = SlashCommandTools.subCommand('setip',
+	'Set the preferred Minecraft server IP address for this server')
 
 local MinecraftSetIpOptions = SlashCommandTools.string('ip', 'The IP address of the server')
 MinecraftSetIpOptions:setRequired(true)
@@ -53,46 +56,49 @@ MinecraftSubCommandHandler:AddSubCommand(MinecraftStatusSubCommand.name, functio
 		return Interaction:reply('There is no data for this Discord server', true)
 	end
 
-	local ServerIPStr = ServerMinecraftData.IP..':'..ServerMinecraftData.PORT
-	local Response, Headers = http_request('GET', ('https://api.mcsrvstat.us/3/%s'):format(ServerIPStr))
-
-	local IsOnline = Response.online
+	local ServerIPStr = ServerMinecraftData.IP .. ':' .. ServerMinecraftData.PORT
+	local Headers, Body = Request("GET", ('https://api.mcsrvstat.us/3/%s'):format(ServerIPStr), nil,
+		{ ["User-Agent"] = "tommy-bot/1.0 Main-Release" })
+	if not Headers.code == 200 then
+		return error("Something went wrong")
+	end
+	local IsOnline = Body.online
 	local EmbedData
 	if IsOnline then
-		local MaxPlayers = Response.players.max
-		local OnlinePlayers = Response.players.online
+		local MaxPlayers = Body.players.max
+		local OnlinePlayers = Body.players.online
 		local AnonymousPlayers = OnlinePlayers
 		local Players = {}
-		if OnlinePlayers>0 then
-			for PlayerIndex, PlayerData in next, Response.players.list do
+		if OnlinePlayers > 0 then
+			for PlayerIndex, PlayerData in next, Body.players.list do
 				table.insert(Players, PlayerData.name)
-				AnonymousPlayers = AnonymousPlayers-1
+				AnonymousPlayers = AnonymousPlayers - 1
 			end
 		else
 			table.insert(Players, 'No players online')
 		end
-		if AnonymousPlayers>0 then
+		if AnonymousPlayers > 0 then
 			for AnonymousPlayerIndex = 1, AnonymousPlayers do
 				table.insert(Players, 'Anonymous Player')
 			end
 		end
 		EmbedData = {
-	        title = 'Server Status for '..ServerIPStr,
-	        description = Response.motd.clean[1]..' ('..Response.version..')',
-	        fields = {
-	        	{name = 'Players', value = OnlinePlayers..'/'..MaxPlayers, inline = true},
-	        	{name = 'List of players', value = table.concat(Players, '\n'), inline = true}
-	        },
-	        color = COLOURS.GREEN
-	    }
+			title = 'Server Status for ' .. ServerIPStr,
+			description = Body.motd.clean[1] .. ' (' .. Body.version .. ')',
+			fields = {
+				{ name = 'Players',         value = OnlinePlayers .. '/' .. MaxPlayers, inline = true },
+				{ name = 'List of players', value = table.concat(Players, '\n'),        inline = true }
+			},
+			color = COLOURS.GREEN
+		}
 	else
 		EmbedData = {
-			title = 'Server Status for '..ServerIPStr,
+			title = 'Server Status for ' .. ServerIPStr,
 			description = 'Server is offline',
 			color = COLOURS.RED
 		}
 	end
-	return Interaction:reply({embed = EmbedData})
+	return Interaction:reply({ embed = EmbedData })
 end)
 
 MinecraftSubCommandHandler:AddSubCommand(MinecraftSetIpSubCommand.name, function(Interaction, Command, Args)
@@ -107,15 +113,15 @@ MinecraftSubCommandHandler:AddSubCommand(MinecraftSetIpSubCommand.name, function
 	if not ServerIP then
 		return Interaction:reply('Invalid server IP')
 	end
-	local ServerPort = ServerIPStr:match(ServerIP..':(%d+)') or 25565
+	local ServerPort = ServerIPStr:match(ServerIP .. ':(%d+)') or 25565
 
-	local GuildMinecraftData = {IP = ServerIP, PORT = ServerPort}
+	local GuildMinecraftData = { IP = ServerIP, PORT = ServerPort }
 
-	local GlobalMinecraftData = json.decode(io.open('minecraft_data.json','r'):read('*a'))
+	local GlobalMinecraftData = json.decode(io.open('minecraft_data.json', 'r'):read('*a'))
 	GlobalMinecraftData[GuildId] = GuildMinecraftData
-	io.open('minecraft_data.json','w+'):write(json.encode(GlobalMinecraftData)):close()
+	io.open('minecraft_data.json', 'w+'):write(json.encode(GlobalMinecraftData)):close()
 
-	return Interaction:reply('Successfully added `'..ServerIP..':'..ServerPort..'` for ServerId='..GuildId)
+	return Interaction:reply('Successfully added `' .. ServerIP .. ':' .. ServerPort .. '` for ServerId=' .. GuildId)
 end)
 
 return {
