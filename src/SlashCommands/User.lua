@@ -44,6 +44,7 @@ end
 local IDToDate = { --Terrible ranges but it's all we have
     -- {1000000000, FromYMD("2006-01-01")}, --I guess?
     -- {1864564055, FromYMD("2008-08-04")},
+    { 1228821079,   FromYMD("2013-02-07") }, -- asomstephano12344 (mass scanning near sign removal date)
     { 3800920136,   FromYMD("2016-04-16") },
     { 9855616205,   FromYMD("2017-04-02") },
     { 30361018662,  FromYMD("2018-11-14") },
@@ -62,18 +63,28 @@ local IDToDate = { --Terrible ranges but it's all we have
 local function linterp(i1, i2, m)
     return math.floor(i1 + (i2 - i1) * m)
 end
-local function GuessDateFromAssetID(AssetID)
+local function GuessDateFromAssetID(InstanceID, AssetID)
+    local note = ""
+    if AssetID == 1567446 then
+        note = " (Verification Sign)"
+    end
     for i = #IDToDate, 1, -1 do --Newest to oldest
         local ID, Time = unpack(IDToDate[i])
-        if ID < AssetID then
+        if ID < InstanceID then
             if not IDToDate[i + 1] then
-                return "After " .. ToYMD(Time)
+                -- Screw it we ball, just do unjustified interpolation
+                local ID1, Time1 = unpack(IDToDate[#IDToDate - 1])
+                local ID2, Time2 = unpack(IDToDate[#IDToDate])
+                return "Around " .. ToYMD(linterp(Time1, Time2, (InstanceID - ID1) / (ID2 - ID1))) .. note
             end
             local ParentID, ParentTime = unpack(IDToDate[i + 1])
-            return "Around " .. ToYMD(linterp(Time, ParentTime, (AssetID - ID) / (ParentID - ID)))
+            return "Around " .. ToYMD(linterp(Time, ParentTime, (InstanceID - ID) / (ParentID - ID))) .. note
         end
     end
-    return "Before " .. ToYMD(IDToDate[1][2])
+    -- Screw it we ball, just do unjustified interpolation
+    local ID1, Time1 = unpack(IDToDate[1])
+    local ID2, Time2 = unpack(IDToDate[2])
+    return "Around " .. ToYMD(linterp(Time1, Time2, (InstanceID - ID1) / (ID2 - ID1))) .. note
 end
 
 local function Callback(Interaction, Command, Args)
@@ -128,7 +139,13 @@ local function Callback(Interaction, Command, Args)
     if verificationAssetId.errors then
         verificationDate = "Failed to fetch"
     elseif verificationAssetId.data[1] then
-        verificationDate = GuessDateFromAssetID(verificationAssetId.data[1].instanceId)
+        verificationDate = ""
+        for i, data in next, verificationAssetId.data do
+            verificationDate = verificationDate .. GuessDateFromAssetID(data.instanceId, data.id)
+            if i ~= #verificationAssetId.data then
+                verificationDate = verificationDate .. "\n"
+            end
+        end
     end
 
     local _, badgeRequest = StrafesNET.GetBadgesAwardedDates(id, Badges)
