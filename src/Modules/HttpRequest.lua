@@ -9,6 +9,7 @@ local METHODS = {
 }
 
 local function QueryParams(Params) -- {Name = Value, ...}
+    if not Params then return "" end
     local QueryString = "?"
 
     for ParamName, ParamValue in next, Params do
