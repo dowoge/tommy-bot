@@ -51,6 +51,9 @@ local STRAFESNET_API_ENDPOINTS = {
     },
     TIMES = {
         LIST = "time",
+        WORLD_RECORD = {
+            GET = "time/worldrecord"
+        },
         GET = "time/%d"
     },
     USERS = {
@@ -98,6 +101,20 @@ function StrafesNET.ListTimes(UserId, MapId, GameId, ModeId, StyleId, SortBy, Pa
         mode_id = ModeId,
         style_id = StyleId,
         sort_by = SortBy or 1,
+        page_size = PageSize or 10,
+        page_number = PageNumber or 0
+    }
+    return Request("GET", RequestUrl, Params, Headers)
+end
+
+function StrafesNET.GetWorldRecords(UserId, MapId, GameId, ModeId, StyleId, PageSize, PageNumber)
+    local RequestUrl = STRAFESNET_API_URL .. STRAFESNET_API_ENDPOINTS.TIMES.WORLD_RECORD.GET
+    local Params = {
+        user_id = UserId,
+        map_id = MapId,
+        game_id = GameId,
+        mode_id = ModeId,
+        style_id = StyleId,
         page_size = PageSize or 10,
         page_number = PageNumber or 0
     }
