@@ -79,9 +79,9 @@ end
 function StrafesNET.ListRanks(GameId, ModeId, StyleId, SortBy, PageSize, PageNumber)
     local RequestUrl = STRAFESNET_API_URL .. STRAFESNET_API_ENDPOINTS.RANKS.LIST
     local Params = {
-        gameId = GameId,
-        modeId = ModeId,
-        styleId = StyleId,
+        game_id = GameId,
+        mode_id = ModeId,
+        style_id = StyleId,
         sort_by = SortBy or 1,
         page_size = PageSize or 10,
         page_number = PageNumber or 1
