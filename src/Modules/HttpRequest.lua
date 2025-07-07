@@ -74,11 +74,13 @@ local function Request(Method, Url, Params, RequestHeaders, RequestBody, Callbac
         return coroutine.wrap(function()
             local Headers, Body = HTTPRequest(Method, RequestUrl, FormattedHeaders, RequestBody)
             NormalizeHeaders(Headers)
+            print(Headers.code)
             Callback(Headers, TryDecodeJson(Body))
         end)
     else
         local Headers, Body = HTTPRequest(Method, RequestUrl, FormattedHeaders, RequestBody)
         NormalizeHeaders(Headers)
+        print(Headers.code)
         return Headers, TryDecodeJson(Body)
     end
 end
