@@ -2,7 +2,9 @@ local HttpRequest = require("./HttpRequest.lua")
 local Request = HttpRequest.Request
 local APIKeys = require("./APIKeys.lua")
 
-local Headers = {
+local RankConstants = require("./RankConstants.lua")
+
+local RequestHeaders = {
     ["Content-Type"] = "application/json",
     ["X-API-Key"] = APIKeys.StrafesNET
 }
@@ -21,6 +23,12 @@ local ROBLOX_PRESENCE_URL = 'https://presence.roblox.com/v1/'
 local ROBLOX_THUMBNAIL_URL = 'https://thumbnails.roblox.com/v1/'
 local ROBLOX_INVENTORY_API = 'https://inventory.roblox.com/v1/'
 local ROBLOX_GROUPS_ROLES_URL = 'https://groups.roblox.com/v2/users/%s/groups/roles'
+
+local GAME_IDS = {
+    BHOP = 1,
+    SURF = 2,
+    -- FLY_TRIALS = 5
+}
 
 ROBLOX_THUMBNAIL_SIZES = {
     [48] = '48x48',
@@ -66,17 +74,42 @@ local STRAFESNET_API_ENDPOINTS = {
 }
 
 local StrafesNET = {}
+StrafesNET.GameIds = GAME_IDS
+
+function StrafesNET.CalculatePoints(Rank, Count)
+    local ExpMagic2 = math.exp(RankConstants.Magic2)
+    local Num1 = ExpMagic2 - 1.0
+    local ExpDenomExp = math.max(-700.0, -RankConstants.Magic2 * Count)
+    local Denom1 = 1.0 - math.exp(ExpDenomExp)
+
+    local ExpRankExp = math.max(-700.0, -RankConstants.Magic2 * Rank)
+    local ExpRank = math.exp(ExpRankExp)
+
+    local Part1 = RankConstants.Magic1 * (Num1 / Denom1) * ExpRank
+    local Part2 = (1.0 - RankConstants.Magic1) * (1.0 + 2.0 * (Count - Rank)) / (Count * Count)
+
+    return Part1 + Part2
+end
+
+function StrafesNET.CalculateSkill(Rank, Count)
+    local Denominator = Count - 1
+    if Denominator == 0 then
+        return 0
+    else
+        return (Count - Rank) / Denominator
+    end
+end
 
 function StrafesNET.ListMaps(GameId, PageSize, PageNumber)
     local RequestUrl = STRAFESNET_API_URL .. STRAFESNET_API_ENDPOINTS.MAPS.LIST
     local Params = { game_id = GameId, page_size = PageSize or 10, page_number = PageNumber or 1 }
-    return Request("GET", RequestUrl, Params, Headers)
+    return Request("GET", RequestUrl, Params, RequestHeaders)
 end
 
 function StrafesNET.GetMap(MapId)
     local RequestUrl = STRAFESNET_API_URL .. STRAFESNET_API_ENDPOINTS.MAPS.GET:format(MapId)
     local Params = { id = MapId }
-    return Request("GET", RequestUrl, Params, Headers)
+    return Request("GET", RequestUrl, Params, RequestHeaders)
 end
 
 function StrafesNET.ListRanks(GameId, ModeId, StyleId, SortBy, PageSize, PageNumber)
@@ -89,10 +122,10 @@ function StrafesNET.ListRanks(GameId, ModeId, StyleId, SortBy, PageSize, PageNum
         page_size = PageSize or 10,
         page_number = PageNumber or 1
     }
-    return Request("GET", RequestUrl, Params, Headers)
+    return Request("GET", RequestUrl, Params, RequestHeaders)
 end
 
-function StrafesNET.ListTimes(UserId, MapId, GameId, ModeId, StyleId, SortBy, PageSize, PageNumber)
+function StrafesNET.ListTimes(MapId, GameId, ModeId, StyleId, UserId, SortBy, PageSize, PageNumber)
     local RequestUrl = STRAFESNET_API_URL .. STRAFESNET_API_ENDPOINTS.TIMES.LIST
     local Params = {
         user_id = UserId,
@@ -100,11 +133,11 @@ function StrafesNET.ListTimes(UserId, MapId, GameId, ModeId, StyleId, SortBy, Pa
         game_id = GameId,
         mode_id = ModeId,
         style_id = StyleId,
-        sort_by = SortBy or 1,
+        sort_by = SortBy or 0,
         page_size = PageSize or 10,
-        page_number = PageNumber or 0
+        page_number = PageNumber or 1
     }
-    return Request("GET", RequestUrl, Params, Headers)
+    return Request("GET", RequestUrl, Params, RequestHeaders)
 end
 
 function StrafesNET.GetWorldRecords(UserId, MapId, GameId, ModeId, StyleId, PageSize, PageNumber)
@@ -118,12 +151,12 @@ function StrafesNET.GetWorldRecords(UserId, MapId, GameId, ModeId, StyleId, Page
         page_size = PageSize or 10,
         page_number = PageNumber or 0
     }
-    return Request("GET", RequestUrl, Params, Headers)
+    return Request("GET", RequestUrl, Params, RequestHeaders)
 end
 
 function StrafesNET.GetTime(TimeId)
     local RequestUrl = STRAFESNET_API_URL .. STRAFESNET_API_ENDPOINTS.TIMES.GET:format(TimeId)
-    return Request("GET", RequestUrl, nil, Headers)
+    return Request("GET", RequestUrl, nil, RequestHeaders)
 end
 
 function StrafesNET.ListUsers(StateId, PageSize, PageNumber)
@@ -133,12 +166,12 @@ function StrafesNET.ListUsers(StateId, PageSize, PageNumber)
         page_size = PageSize or 10,
         page_number = PageNumber or 1,
     }
-    return Request("GET", RequestUrl, Params, Headers)
+    return Request("GET", RequestUrl, Params, RequestHeaders)
 end
 
 function StrafesNET.GetUser(UserId)
     local RequestUrl = STRAFESNET_API_URL .. STRAFESNET_API_ENDPOINTS.USERS.GET:format(UserId)
-    return Request("GET", RequestUrl, nil, Headers)
+    return Request("GET", RequestUrl, nil, RequestHeaders)
 end
 
 function StrafesNET.GetUserRank(UserId, GameId, ModeId, StyleId)
@@ -148,7 +181,49 @@ function StrafesNET.GetUserRank(UserId, GameId, ModeId, StyleId)
         mode_id = ModeId,
         style_id = StyleId,
     }
-    return Request("GET", RequestUrl, Params, Headers)
+    return Request("GET", RequestUrl, Params, RequestHeaders)
+end
+
+-- util stuff or something
+function StrafesNET.GetMapCompletionCount(MapId, GameId, ModeId, StyleId)
+    local Headers, Response = StrafesNET.ListTimes(MapId, GameId, ModeId, StyleId)
+    if Headers.code >= 400 then
+        return error("HTTP Error while getting map completion count")
+    end
+    return Response.pagination.total_items
+end
+
+function StrafesNET.GetAllUserTimes(UserId, GameId, ModeId, StyleId)
+    local Times = {}
+    local CurrentPage = 1
+    local Headers, Response = StrafesNET.ListTimes(nil, GameId, ModeId, StyleId, UserId, 0, 100, CurrentPage)
+    if Headers.code >= 400 then
+        return error("HTTP error while getting times for something")
+    end
+    for TimeIndex, Time in next, Response.data do
+        Times[Time.id] = Time
+    end
+    
+    local TotalPages = Response.pagination.total_pages
+    while CurrentPage < TotalPages do
+        CurrentPage = CurrentPage + 1
+
+        local _Headers, _Response = StrafesNET.ListTimes(nil, GameId, ModeId, StyleId, UserId, 0, 100, CurrentPage)
+        if _Headers.code >= 400 then
+            return error("HTTP error while getting times for something")
+        end
+        for _, Time in next, _Response.data do
+            Times[Time.id] = Time
+        end
+    end
+
+    return Times
+end
+
+function StrafesNET.GetAllMaps()
+    local Maps = {}
+    -- TODO
+    return Maps
 end
 
 function StrafesNET.GetRobloxInfoFromUserId(USER_ID)
@@ -176,42 +251,6 @@ function StrafesNET.GetRobloxInfoFromDiscordId(DISCORD_ID)
     if headers.status == "error" then return headers.messages end
 
     return Request("GET", ROBLOX_API_URL .. "users/" .. body.result.robloxId)
-end
-
-function StrafesNET.GetUserFromAny(user, message)
-    local str = user:match('^["\'](.+)[\'"]$')
-    local num = user:match('^(%d+)$')
-
-    if str then
-        local roblox_user = StrafesNET.GetRobloxInfoFromUsername(str)
-        if not roblox_user.id then return 'User not found' end
-        return roblox_user
-    elseif num then
-        local roblox_user = StrafesNET.GetRobloxInfoFromUserId(user)
-        if not roblox_user.id then return 'Invalid user id' end
-        return roblox_user
-    elseif user == 'me' then
-        local me = message.author
-        local roblox_user = StrafesNET.GetRobloxInfoFromDiscordId(me.id)
-        if not roblox_user.id then
-            return
-            'You are not registered with the fiveman1 api, use !link with the rbhop bot to link your roblox account'
-        end
-        return roblox_user
-    elseif user:match('<@%d+>') then
-        local user_id = user:match('<@(%d+)>')
-        local member = message.guild:getMember(user_id)
-        local roblox_user = StrafesNET.GetRobloxInfoFromDiscordId(member.id)
-        if not roblox_user.id then
-            return
-            'User is not registered with the fiveman1 api, use !link with the rbhop bot to link your roblox account'
-        end
-        return roblox_user
-    else
-        local roblox_user = StrafesNET.GetRobloxInfoFromUsername(user)
-        if not roblox_user.id then return 'User not found' end
-        return roblox_user
-    end
 end
 
 function StrafesNET.GetUserOnlineStatus(USER_ID)
