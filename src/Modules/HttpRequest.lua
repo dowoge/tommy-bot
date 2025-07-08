@@ -1,6 +1,13 @@
 local Http = require('coro-http')
 local HTTPRequest = Http.request
 
+local Timer = require("timer")
+local Sleep = Timer.sleep
+
+local function Wait(n)
+    return Sleep(n * 1000)
+end
+
 local json = require('json')
 
 local METHODS = {
@@ -50,7 +57,7 @@ local function NormalizeHeaders(Response)
     end
 end
 
-local function Request(Method, Url, Params, RequestHeaders, RequestBody, Callback)
+local function Request(Method, Url, Params, RequestHeaders, RequestBody, Callback, MaxRetries)
     if not METHODS[Method] then
         error("[HTTP] Method " .. Method .. " is not supported.")
     end
@@ -65,23 +72,49 @@ local function Request(Method, Url, Params, RequestHeaders, RequestBody, Callbac
 
     local QueryString = QueryParams(Params)                -- at worse (I think), this is an empty string (which cannot mess up the request)
 
-    local FormattedHeaders = CreateHeaders(RequestHeaders) -- At worse, this will just be an empty table (which cannot mess up the request)
+    local FormattedHeaders = CreateHeaders(RequestHeaders) -- at worse, this will just be an empty table (which cannot mess up the request)
 
     local RequestUrl = Url .. QueryString
     print(RequestUrl)
 
-    if Callback and type(Callback) == "function" then
-        return coroutine.wrap(function()
+    MaxRetries = MaxRetries or 10
+
+    local function DoRequest()
+        local Attempt = 0
+        local Delay = 2
+
+        while Attempt <= MaxRetries do
             local Headers, Body = HTTPRequest(Method, RequestUrl, FormattedHeaders, RequestBody)
             NormalizeHeaders(Headers)
-            print(Headers.code)
-            Callback(Headers, TryDecodeJson(Body))
-        end)
-    else
+            print("Attempt:", Attempt + 1, "Status code:", Headers.code)
+
+            -- we will assume <400 = success i guess
+            if Headers.code and Headers.code < 400 then
+                return Headers, TryDecodeJson(Body)
+            end
+
+            Attempt = Attempt + 1
+            if Attempt > MaxRetries then
+                break
+            end
+
+            print("Request failed, retrying in " .. Delay .. " seconds...")
+            Wait(Delay)
+            Delay = Delay * 2 -- exponential back-off
+        end
+
         local Headers, Body = HTTPRequest(Method, RequestUrl, FormattedHeaders, RequestBody)
         NormalizeHeaders(Headers)
-        print(Headers.code)
         return Headers, TryDecodeJson(Body)
+    end
+
+    if Callback and type(Callback) == "function" then
+        return coroutine.wrap(function()
+            local Headers, DecodedBody = DoRequest()
+            Callback(Headers, DecodedBody)
+        end)
+    else
+        return DoRequest()
     end
 end
 
