@@ -5,6 +5,12 @@ local CommandCollector = require('./Modules/CommandCollector.lua')
 local Client = Discordia.Client():useApplicationCommands()
 Discordia.extensions()
 
+table.clear = function(t)
+    for k in pairs(t) do
+        t[k] = nil
+    end
+end
+
 local MessageCommandCollector = CommandCollector.new('Message'):Collect()
 local SlashCommandCollector = CommandCollector.new('Slash'):Collect()
 local UserCommandCollector = CommandCollector.new('User'):Collect()
