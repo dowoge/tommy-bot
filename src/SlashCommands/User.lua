@@ -159,6 +159,7 @@ local function Callback(Interaction, Command, Args)
         local awardedDate = tonumber(Date.fromISO(badge.awardedDate):toSeconds())
         if firstBadgeDate > awardedDate then
             firstBadge = badgeId
+            firstBadgeDate = awardedDate
         end
         -- badgesDates[badgeId]=awardedDate
     end
