@@ -17,12 +17,12 @@ end
 
 local STRAFESNET_API_URL = "https://api.strafes.net/api/v1/"
 local FIVEMAN_API_URL = 'https://api.fiveman1.net/v1/'
-local ROBLOX_API_URL = 'https://users.roblox.com/v1/'
-local ROBLOX_BADGES_API = 'https://badges.roblox.com/v1/'
-local ROBLOX_PRESENCE_URL = 'https://presence.roblox.com/v1/'
-local ROBLOX_THUMBNAIL_URL = 'https://thumbnails.roblox.com/v1/'
-local ROBLOX_INVENTORY_API = 'https://inventory.roblox.com/v1/'
-local ROBLOX_GROUPS_ROLES_URL = 'https://groups.roblox.com/v2/users/%s/groups/roles'
+local ROBLOX_API_URL = 'https://users.roproxy.com/v1/'
+local ROBLOX_BADGES_API = 'https://badges.roproxy.com/v1/'
+local ROBLOX_PRESENCE_URL = 'https://presence.roproxy.com/v1/'
+local ROBLOX_THUMBNAIL_URL = 'https://thumbnails.roproxy.com/v1/'
+local ROBLOX_INVENTORY_API = 'https://inventory.roproxy.com/v1/'
+local ROBLOX_GROUPS_ROLES_URL = 'https://groups.roproxy.com/v2/users/%s/groups/roles'
 
 local GAME_IDS = {
     BHOP = 1,
