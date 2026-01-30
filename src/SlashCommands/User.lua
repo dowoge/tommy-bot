@@ -64,6 +64,7 @@ local function linterp(i1, i2, m)
     return math.floor(i1 + (i2 - i1) * m)
 end
 local function GuessDateFromAssetID(InstanceID, AssetID)
+    InstanceID = tonumber(InstanceID)
     local note = ""
     if AssetID == 1567446 then
         note = " (Verification Sign)"
