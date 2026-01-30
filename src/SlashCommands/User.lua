@@ -23,10 +23,10 @@ Badges = {
     '2124615096', --Surf, post-group
 }
 BadgesToName = {
-    [275640532] = 'old bhop',
-    [363928432] = 'old surf',
-    [2124614454] = 'new bhop',
-    [2124615096] = 'new surf',
+    [Badges[1]] = 'old bhop',
+    [Badges[2]] = 'old surf',
+    [Badges[3]] = 'new bhop',
+    [Badges[4]] = 'new surf',
 }
 local function round(x, n)
     return string.format('%.' .. (n or 0) .. 'f', x)
