@@ -110,6 +110,8 @@ local function Callback(Interaction, Command, Args)
         return error("User not found")
     end
 
+    Interaction:replyDeferred()
+
     local description = user_info.description == '' and 'This user has no description' or user_info.description
     local created = tostring(Date.fromISO(user_info.created):toSeconds())
     local current = Date():toSeconds()
