@@ -651,7 +651,7 @@ local function SetCache(Key, Headers, Body, Options)
         ExpiresAt = Now() + Ttl,
         ETag = Etag
     }
-    print("Cached:", Key)
+    -- print("Cached:", Key)
     SaveCacheToFile(false)
 end
 
@@ -771,7 +771,7 @@ local function Request(Method, Url, Params, RequestHeaders, RequestBody, Callbac
     local FormattedHeaders = CreateHeaders(MutableHeaders) -- at worse, this will just be an empty table (which cannot mess up the request)
 
     local RequestUrl = Url .. QueryString
-    print(RequestUrl)
+    -- print(RequestUrl)
 
     MaxRetries = MaxRetries or (Options and Options.maxRetries) or 10
     if Options and Options.waitUntilSuccess then
@@ -791,7 +791,7 @@ local function Request(Method, Url, Params, RequestHeaders, RequestBody, Callbac
             CacheKey = GetCacheKey(Method, RequestUrl, Options)
             CachedHeaders, CachedBody = GetCached(CacheKey)
             if CachedHeaders then
-                print("Attempt:", 1, "Status code:", "CACHE")
+                -- print("Attempt:", 1, "Status code:", "CACHE")
                 return CachedHeaders, CachedBody
             end
 
@@ -806,7 +806,7 @@ local function Request(Method, Url, Params, RequestHeaders, RequestBody, Callbac
             EnforceRateLimit(Domain, Options)
             local Headers, Body = HTTPRequest(Method, RequestUrl, FormattedHeaders, RequestBody)
             NormalizeHeaders(Headers)
-            print("Attempt:", Attempt + 1, "Status code:", Headers.code)
+            -- print("Attempt:", Attempt + 1, "Status code:", Headers.code)
 
             if Domain then
                 UpdateServerRateLimit(Domain, Headers)
@@ -838,10 +838,10 @@ local function Request(Method, Url, Params, RequestHeaders, RequestBody, Callbac
                 MarkRateLimited(Domain, Headers)
                 local WaitSeconds = GetRateLimitWaitSeconds(Domain, Headers)
                 if WaitSeconds and WaitSeconds > 0 then
-                    print("Rate limited, retrying in " .. WaitSeconds .. " seconds...")
+                    -- print("Rate limited, retrying in " .. WaitSeconds .. " seconds...")
                     Wait(WaitSeconds)
                 else
-                    print("Rate limited, retrying in " .. Delay .. " seconds...")
+                    -- print("Rate limited, retrying in " .. Delay .. " seconds...")
                     Wait(Delay)
                     Delay = Delay * 2 -- exponential back-off
                 end
@@ -861,7 +861,7 @@ local function Request(Method, Url, Params, RequestHeaders, RequestBody, Callbac
                     break
                 end
 
-                print("Request failed, retrying in " .. Delay .. " seconds...")
+                -- print("Request failed, retrying in " .. Delay .. " seconds...")
                 Wait(Delay)
                 Delay = Delay * 2 -- exponential back-off
             end
