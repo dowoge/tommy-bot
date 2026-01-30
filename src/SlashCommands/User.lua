@@ -107,7 +107,7 @@ local function Callback(Interaction, Command, Args)
             _, user_info = StrafesNET.GetRobloxInfoFromDiscordId(user.id)
         end
     end
-    if not user_info.id then
+    if not user_info or not user_info.id then
         return error("User not found")
     end
 

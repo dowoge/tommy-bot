@@ -293,8 +293,8 @@ function StrafesNET.GetAllTimePlacements(TimeIds)
 
         if Response and Response.data then
             for _, Item in next, Response.data do
-                    local TimeId = SafeNumberToString(Item.id)
-                    Placements[TimeId] = Item.placement
+                local TimeId = SafeNumberToString(Item.id)
+                Placements[TimeId] = Item.placement
             end
         end
 
@@ -451,7 +451,7 @@ end
 function StrafesNET.GetRobloxInfoFromDiscordId(DISCORD_ID)
     if not DISCORD_ID then return 'empty id' end
     -- table.foreach(DISCORD_ID, print)
-    local headers, body = Request("GET", FIVEMAN_API_URL .. "users/" .. DISCORD_ID, {CacheTTL = 60 * 60 * 24 * 7})
+    local headers, body = Request("GET", FIVEMAN_API_URL .. "users/" .. DISCORD_ID, {CacheTTL = 60 * 60 * 24 * 7, MaxRetries = 0})
     if headers.status == "error" then return headers.messages end
 
     return StrafesNET.GetRobloxInfoFromUserId(body.result.robloxId)
