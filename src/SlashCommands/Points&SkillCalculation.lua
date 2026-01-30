@@ -37,10 +37,15 @@ CalculateCommand:addOption(MemberOption)
 local function Pad(String, Padding)
     Padding = Padding or 20
     String = tostring(String)
-    return String..string.rep(" ", Padding-#String)
+    return String..string.rep(" ", Padding - #String)
 end
 
 local function Callback(Interaction, Command, Args)
+
+    if Interaction.user.id ~= "697004725123416095" then
+        return Interaction:reply("You are not allowed to use this command", true)
+    end
+
     local UserInfo
     if Args then
         if Args.username then
