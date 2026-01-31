@@ -27,6 +27,10 @@ for Style, StyleId in next, StrafesNET.Styles do
 end
 StyleOption = StyleOption:setRequired(true)
 
+local SortOption = SlashCommandTools.string("sort", "Which sorting method to use on the times list")
+SortOption:addChoice(SlashCommandTools.choice("Points", "points"))
+SortOption:addChoice(SlashCommandTools.choice("Skill", "skill"))
+
 CalculateCommand:addOption(GameOption)
 CalculateCommand:addOption(StyleOption)
 
@@ -39,6 +43,19 @@ local function Pad(String, Padding)
     String = tostring(String)
     return String..string.rep(" ", Padding - #String)
 end
+
+local function RankPointsSort(Time1, Time2)
+    return Time1.RankPoints < Time2.RankPoints
+end
+
+local function SkillSort(Time1, Time2)
+    return Time1.Skill < Time2.Skill
+end
+
+local SortFunctions = {
+    points = RankPointsSort,
+    skill = SkillSort
+}
 
 local function Callback(Interaction, Command, Args)
 
@@ -74,9 +91,9 @@ local function Callback(Interaction, Command, Args)
     if UserInfo == nil then
         error("SOMETHING WENT REALLY WRONG")
     end
-    
+
     Interaction:replyDeferred()
-    
+
     local GameId, StyleId = StrafesNET.GameIds[Args.game], StrafesNET.Styles[Args.style]
 
     local GameMaps = StrafesNETMaps[GameId]
@@ -132,9 +149,10 @@ local function Callback(Interaction, Command, Args)
         end
     end
 
-    table.sort(TimesConcise, function(Time1, Time2)
-        return Time1.RankPoints < Time2.RankPoints
-    end)
+    local SortMethod = Args.Sort
+    local SortFunction = SortFunctions[SortMethod]
+
+    table.sort(TimesConcise, SortFunction)
 
     local FinalText = "Rank calculation for " .. UserInfo.displayName .. " (@" .. UserInfo.name .. ") / " .. UserInfo.id .. ": ".. StrafesNET.GameIdsString[GameId]..", "..StrafesNET.StylesString[StyleId] .."\n" ..
                         "Points: " .. TotalPoints .. "\n" ..
@@ -150,7 +168,7 @@ local function Callback(Interaction, Command, Args)
         local Skill = StrafesNET.FormatSkill(TimeData.Skill)
 
         local TimeString = StrafesNET.FormatTime(TimeData.Time.time)
-        
+
         local Map = TimeData.Time.map
         local MapString = Map.display_name .. " (" .. Map.id .. ")"
 
@@ -165,7 +183,7 @@ local function Callback(Interaction, Command, Args)
     Interaction:reply({
         file = FileName
     })
-    
+
     os.remove(FileName)
 end
 
