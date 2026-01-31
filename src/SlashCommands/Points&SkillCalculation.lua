@@ -150,8 +150,8 @@ local function Callback(Interaction, Command, Args)
         end
     end
 
-    local SortMethod = Args.Sort
-    local SortFunction = SortFunctions[SortMethod]
+    local SortMethod = Args.sort
+    local SortFunction = SortMethod and SortFunctions[SortMethod] or RankPointsSort
 
     table.sort(TimesConcise, SortFunction)
 
