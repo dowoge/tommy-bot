@@ -33,6 +33,7 @@ SortOption:addChoice(SlashCommandTools.choice("Skill", "skill"))
 
 CalculateCommand:addOption(GameOption)
 CalculateCommand:addOption(StyleOption)
+CalculateCommand:addOption(SortOption)
 
 CalculateCommand:addOption(UsernameOption)
 CalculateCommand:addOption(UserIdOption)
