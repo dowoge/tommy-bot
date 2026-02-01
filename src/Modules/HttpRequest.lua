@@ -29,38 +29,6 @@ local function PruneCache()
     end
 end
 
-local function SerializeHeaders(Headers)
-    if type(Headers) ~= "table" then return nil, nil end
-    local Clean = {}
-    local Types = {}
-    for Key, Value in next, Headers do
-        if type(Key) == "string" then
-            local ValueType = type(Value)
-            if ValueType == "number" or ValueType == "boolean" then
-                Types[Key] = ValueType
-            end
-            Clean[Key] = tostring(Value)
-        end
-    end
-    return Clean, Types
-end
-
-local function RestoreHeaderTypes(Headers, Types)
-    if type(Headers) ~= "table" or type(Types) ~= "table" then return Headers end
-    for Key, ValueType in next, Types do
-        local Raw = Headers[Key]
-        if ValueType == "number" and type(Raw) == "string" then
-            local NumberValue = tonumber(Raw)
-            if NumberValue then
-                Headers[Key] = NumberValue
-            end
-        elseif ValueType == "boolean" and type(Raw) == "string" then
-            Headers[Key] = Raw == "true"
-        end
-    end
-    return Headers
-end
-
 local function LoadCacheFromFile()
     local FileHandle = io.open(CacheFilePath, "r")
     if not FileHandle then return end
@@ -75,17 +43,9 @@ local function LoadCacheFromFile()
         CacheStore = {}
         for _, Entry in next, Decoded do
             if Entry and Entry.Key then
-                local BodyValue = Entry.Body
-                if not Entry.BodyIsJson and type(BodyValue) == "string" then
-                    local NumericBody = tonumber(BodyValue)
-                    if NumericBody then
-                        BodyValue = NumericBody
-                    end
-                end
-                local RestoredHeaders = RestoreHeaderTypes(Entry.Headers or {}, Entry.HeadersTypes)
                 CacheStore[Entry.Key] = {
-                    Headers = RestoredHeaders,
-                    Body = BodyValue,
+                    Headers = Entry.Headers or {},
+                    Body = Entry.Body,
                     BodyIsJson = Entry.BodyIsJson,
                     ExpiresAt = Entry.ExpiresAt,
                     ETag = Entry.ETag
@@ -113,11 +73,9 @@ local function SaveCacheToFile(Force)
     PruneCache()
     local Serializable = {}
     for Key, Entry in next, CacheStore do
-        local CleanHeaders, HeaderTypes = SerializeHeaders(Entry.Headers)
         Serializable[#Serializable + 1] = {
             Key = Key,
-            Headers = CleanHeaders,
-            HeadersTypes = HeaderTypes,
+            Headers = Entry.Headers,
             Body = Entry.Body,
             BodyIsJson = Entry.BodyIsJson,
             ExpiresAt = Entry.ExpiresAt,
@@ -661,12 +619,6 @@ local function GetCached(Key)
     if not Entry then return nil end
     if Entry.ExpiresAt and Entry.ExpiresAt > Now() then
         local HeadersCopy = CopyTable(Entry.Headers) or {}
-        if HeadersCopy.code and type(HeadersCopy.code) == "string" then
-            local NumericCode = tonumber(HeadersCopy.code)
-            if NumericCode then
-                HeadersCopy.code = NumericCode
-            end
-        end
         HeadersCopy.Cached = true
         if Entry.BodyIsJson then
             return HeadersCopy, TryDecodeJson(Entry.Body)
@@ -820,12 +772,6 @@ local function Request(Method, Url, Params, RequestHeaders, RequestBody, Callbac
                 local ExpiredEntry = GetExpiredCache(CacheKey)
                 if ExpiredEntry then
                     local HeadersCopy = CopyTable(ExpiredEntry.Headers) or {}
-                    if HeadersCopy.code and type(HeadersCopy.code) == "string" then
-                        local NumericCode = tonumber(HeadersCopy.code)
-                        if NumericCode then
-                            HeadersCopy.code = NumericCode
-                        end
-                    end
                     HeadersCopy.Cached = true
                     if ExpiredEntry.BodyIsJson then
                         return HeadersCopy, TryDecodeJson(ExpiredEntry.Body)
