@@ -246,7 +246,7 @@ function StrafesNET.ListTimes(MapId, GameId, ModeId, StyleId, UserId, SortBy, Pa
         page_size = PageSize or 10,
         page_number = PageNumber or 1
     }
-    return Request("GET", RequestUrl, Params, RequestHeaders, {CacheTTL = 60 * 60 * 24 * 7})
+    return Request("GET", RequestUrl, Params, RequestHeaders, {CacheTTL = 60 * 60 * 12})
 end
 
 function StrafesNET.GetWorldRecords(UserId, MapId, GameId, ModeId, StyleId, PageSize, PageNumber)
@@ -268,7 +268,7 @@ function StrafesNET.GetTimePlacement(TimeIds)
     local Params = {
         ids = TimeIds
     }
-    return Request("GET", RequestUrl, Params, RequestHeaders, {CacheTTL = 60 * 60})
+    return Request("GET", RequestUrl, Params, RequestHeaders, {CacheTTL = 60 * 60 * 12})
 end
 
 function StrafesNET.GetAllTimePlacements(TimeIds)
