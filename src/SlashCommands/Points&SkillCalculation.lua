@@ -59,38 +59,47 @@ local SortFunctions = {
 }
 
 local function Callback(Interaction, Command, Args)
-
     if Interaction.user.id ~= "697004725123416095" then
         return Interaction:reply("You are not allowed to use this command", true)
     end
-
     local UserInfo
-    if Args then
-        if Args.username then
-            local Headers, Response = StrafesNET.GetRobloxInfoFromUsername(Args.username)
-            if Headers.code < 400 then
-                UserInfo = Response
-            end
-        elseif Args.user_id then
+    local ErrorMessage = "Something went very very wrong"
+    if Args.username then
+        local Headers, Response = StrafesNET.GetRobloxInfoFromUsername(Args.username)
+        if tonumber(Headers.code) < 400 then
+            UserInfo = Response
+        else
+            ErrorMessage = "Could not find user info from user id ("..Args.username..")"
+        end
+    elseif Args.user_id then
+        if tostring(Args.user_id):match("e") then
+            ErrorMessage = "User id too high for lua number precision (User id: " .. tostring(Args.user_id) .. ")"
+        else
             local Headers, Response = StrafesNET.GetRobloxInfoFromUserId(Args.user_id)
-            if Headers.code < 400 then
+            if tonumber(Headers.code) < 400 then
                 UserInfo = Response
+            else
+                ErrorMessage = "Could not find user info from user id (" .. tostring(Args.user_id) .. ")"
             end
-        elseif Args.member then
-            local Headers, Response = StrafesNET.GetRobloxInfoFromDiscordId(Args.member.id)
-            if Headers.code < 400 then
-                UserInfo = Response
-            end
+        end
+    elseif Args.member then
+        local Headers, Response = StrafesNET.GetRobloxInfoFromDiscordId(Args.member.id)
+        if tonumber(Headers.code) < 400 then
+            UserInfo = Response
+        else
+            ErrorMessage = "User has not linked their roblox account to their discord (they must link their accounts using the rbhop dog's !link command)"
         end
     else
         local Headers, Response = StrafesNET.GetRobloxInfoFromDiscordId((Interaction.member or Interaction.user).id)
-        if Headers.code < 400 then
+        if tonumber(Headers.code) < 400 then
             UserInfo = Response
+        else
+            ErrorMessage = "User has not linked their roblox account to their discord (they must link their accounts using the rbhop dog's !link command)"
         end
     end
 
     if UserInfo == nil then
-        error("SOMETHING WENT REALLY WRONG")
+        error(ErrorMessage)
     end
 
     Interaction:replyDeferred()

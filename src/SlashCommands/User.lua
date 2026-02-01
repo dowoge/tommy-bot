@@ -6,6 +6,8 @@ Discordia.extensions()
 
 local StrafesNET = require('../Modules/StrafesNET.lua')
 
+local SafeNumberToString = StrafesNET.SafeNumberToString
+
 local UserCommand = SlashCommandTools.slashCommand('user', 'Looks up specified user on Roblox')
 
 local UsernameOption = SlashCommandTools.string('username', 'Username to look up')
@@ -89,38 +91,58 @@ local function GuessDateFromAssetID(InstanceID, AssetID)
 end
 
 local function Callback(Interaction, Command, Args)
-    local user_info
+    local UserInfo
+    local ErrorMessage = "Something went very very wrong"
     if Args then
-        local username = Args.username
-        local user_id = Args.user_id
-        local member = Args.member
-        if username then
-            _, user_info = StrafesNET.GetRobloxInfoFromUsername(username)
-        elseif user_id then
-            _, user_info = StrafesNET.GetRobloxInfoFromUserId(user_id)
-        elseif member then
-            _, user_info = StrafesNET.GetRobloxInfoFromDiscordId(member.id)
+        if Args.username then
+            local Headers, Response = StrafesNET.GetRobloxInfoFromUsername(Args.username)
+            if tonumber(Headers.code) < 400 then
+                UserInfo = Response
+            else
+                ErrorMessage = "Could not find user info from user id ("..Args.username..")"
+            end
+        elseif Args.user_id then
+            if tostring(Args.user_id):match("e") then
+                ErrorMessage = "User id too high for lua number precision (User id: " .. tostring(Args.user_id) .. ")"
+            else
+                local Headers, Response = StrafesNET.GetRobloxInfoFromUserId(Args.user_id)
+                if tonumber(Headers.code) < 400 then
+                    UserInfo = Response
+                else
+                    ErrorMessage = "Could not find user info from user id (" .. tostring(Args.user_id) .. ")"
+                end
+            end
+        elseif Args.member then
+            local Headers, Response = StrafesNET.GetRobloxInfoFromDiscordId(Args.member.id)
+            if tonumber(Headers.code) < 400 then
+                UserInfo = Response
+            else
+                ErrorMessage = "User has not linked their roblox account to their discord (they must link their accounts using the rbhop dog's !link command)"
+            end
         end
     else
-        local user = Interaction.member or Interaction.user
-        if user then
-            _, user_info = StrafesNET.GetRobloxInfoFromDiscordId(user.id)
+        local Headers, Response = StrafesNET.GetRobloxInfoFromDiscordId((Interaction.member or Interaction.user).id)
+        if tonumber(Headers.code) < 400 then
+            UserInfo = Response
+        else
+            ErrorMessage = "User has not linked their roblox account to their discord (they must link their accounts using the rbhop dog's !link command)"
         end
     end
-    if not user_info or not user_info.id then
-        return error("User not found")
+
+    if UserInfo == nil then
+        error(ErrorMessage)
     end
 
     Interaction:replyDeferred()
 
-    local description = user_info.description == '' and 'This user has no description' or user_info.description
-    local created = tostring(Date.fromISO(user_info.created):toSeconds())
+    local description = UserInfo.description == '' and 'This user has no description' or UserInfo.description
+    local created = tostring(Date.fromISO(UserInfo.created):toSeconds())
     local current = Date():toSeconds()
     local accountAge = round((current - created) / 86400)
-    local isBanned = user_info.isBanned
-    local id = user_info.id
-    local name = user_info.name
-    local displayName = user_info.displayName
+    local isBanned = UserInfo.isBanned
+    local id = UserInfo.id
+    local name = UserInfo.name
+    local displayName = UserInfo.displayName
 
     local usernameHistoryHeaders, usernameHistoryBody = StrafesNET.GetUserUsernameHistory(id)
     local usernameHistory = usernameHistoryBody.data or {}

@@ -59,7 +59,7 @@ MinecraftSubCommandHandler:AddSubCommand(MinecraftStatusSubCommand.name, functio
 	local ServerIPStr = ServerMinecraftData.IP .. ':' .. ServerMinecraftData.PORT
 	local Headers, Body = Request("GET", ('https://api.mcsrvstat.us/3/%s'):format(ServerIPStr), nil,
 		{ ["User-Agent"] = "tommy-bot/1.0 Main-Release" })
-	if not Headers.code == 200 then
+	if tonumber(Headers.code) ~= 200 then
 		return error("Something went wrong")
 	end
 	local IsOnline = Body.online

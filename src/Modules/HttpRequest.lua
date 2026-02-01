@@ -760,6 +760,8 @@ local function Request(Method, Url, Params, RequestHeaders, RequestBody, Callbac
             NormalizeHeaders(Headers)
             -- print("Attempt:", Attempt + 1, "Status code:", Headers.code)
 
+            local ResponseCode = tonumber(Headers.code)
+
             if Domain then
                 UpdateServerRateLimit(Domain, Headers)
                 if not (Options and Options.ignoreRateLimit) then
@@ -768,7 +770,7 @@ local function Request(Method, Url, Params, RequestHeaders, RequestBody, Callbac
                 end
             end
 
-            if Headers.code == 304 and CacheKey then
+            if ResponseCode == 304 and CacheKey then
                 local ExpiredEntry = GetExpiredCache(CacheKey)
                 if ExpiredEntry then
                     local HeadersCopy = CopyTable(ExpiredEntry.Headers) or {}
@@ -780,7 +782,7 @@ local function Request(Method, Url, Params, RequestHeaders, RequestBody, Callbac
                 end
             end
 
-            if Headers.code == 429 and Attempt < MaxRetries then
+            if ResponseCode == 429 and Attempt < MaxRetries then
                 MarkRateLimited(Domain, Headers)
                 local WaitSeconds = GetRateLimitWaitSeconds(Domain, Headers)
                 if WaitSeconds and WaitSeconds > 0 then
@@ -794,7 +796,7 @@ local function Request(Method, Url, Params, RequestHeaders, RequestBody, Callbac
                 Attempt = Attempt + 1
             else
                 -- we will assume <400 = success i guess
-                if Headers.code and Headers.code < 400 then
+                if ResponseCode and ResponseCode < 400 then
                     local DecodedBody = TryDecodeJson(Body)
                     if UseCache and CacheKey then
                         SetCache(CacheKey, Headers, DecodedBody, Options)
@@ -815,8 +817,9 @@ local function Request(Method, Url, Params, RequestHeaders, RequestBody, Callbac
 
         local Headers, Body = HTTPRequest(Method, RequestUrl, FormattedHeaders, RequestBody)
         NormalizeHeaders(Headers)
+        local ResponseCode = tonumber(Headers.code)
         local DecodedBody = TryDecodeJson(Body)
-        if Headers.code and Headers.code < 400 and UseCache and CacheKey then
+        if ResponseCode and ResponseCode < 400 and UseCache and CacheKey then
             SetCache(CacheKey, Headers, DecodedBody, Options)
         end
         return Headers, DecodedBody

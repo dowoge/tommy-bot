@@ -287,7 +287,8 @@ function StrafesNET.GetAllTimePlacements(TimeIds)
         end
 
         local Headers, Response = StrafesNET.GetTimePlacement(Batch)
-        if Headers.code and Headers.code >= 400 then
+        local ResponseCode = tonumber(Headers.code)
+        if ResponseCode and ResponseCode >= 400 then
             return error("HTTP error while getting time placements")
         end
 
@@ -337,7 +338,7 @@ end
 -- util stuff or something
 function StrafesNET.GetMapCompletionCount(MapId, GameId, ModeId, StyleId)
     local Headers, Response = StrafesNET.ListTimes(MapId, GameId, ModeId, StyleId)
-    if Headers.code >= 400 then
+    if tonumber(Headers.code) >= 400 then
         return error("HTTP Error while getting map completion count")
     end
     return Response.pagination.total_items
@@ -355,7 +356,7 @@ function StrafesNET.GetAllUserTimes(UserId, GameId, ModeId, StyleId)
     local Times = {}
     local CurrentPage = 1
     local Headers, Response = StrafesNET.ListTimes(nil, GameId, ModeId, StyleId, UserId, 0, 100, CurrentPage)
-    if Headers.code >= 400 then
+    if tonumber(Headers.code) >= 400 then
         return error("HTTP error while getting times for something")
     end
     for TimeIndex, Time in next, Response.data do
@@ -367,8 +368,8 @@ function StrafesNET.GetAllUserTimes(UserId, GameId, ModeId, StyleId)
     while CurrentPage < TotalPages do
         CurrentPage = CurrentPage + 1
 
-        local _Headers, _Response = StrafesNET.ListTimes(nil, GameId, ModeId, StyleId, UserId, 0, 100, CurrentPage)
-        if _Headers.code >= 400 then
+        local Headers, _Response = StrafesNET.ListTimes(nil, GameId, ModeId, StyleId, UserId, 0, 100, CurrentPage)
+        if tonumber(Headers.code) >= 400 then
             return error("HTTP error while getting times for something")
         end
         for _, Time in next, _Response.data do
@@ -431,28 +432,23 @@ function StrafesNET.GetAllMaps()
 end
 
 function StrafesNET.GetRobloxInfoFromUserId(USER_ID)
-    if not USER_ID then return 'empty id' end
     return Request("GET", ROBLOX_API_URL .. "users/" .. USER_ID, {CacheTTL = 60 * 60 * 12})
 end
 
 function StrafesNET.GetRobloxInfoFromUsername(USERNAME)
-    if not USERNAME then return 'empty username' end
-    if #USERNAME > 32 then return 'Username too long' end
-
-    local headers, body = Request("POST", ROBLOX_API_URL .. "usernames/users", nil,
-        { ["Content-Type"] = "application/json" }, { usernames = { USERNAME } }, {CacheTTL = 60 * 60 * 12})
+    local headers, body = Request("POST", ROBLOX_API_URL .. "usernames/users", nil, { ["Content-Type"] = "application/json" }, { usernames = { USERNAME } }, {CacheTTL = 60 * 60 * 12})
     if not body or not body.data or not body.data[1] then
-        return 'Username \'' .. USERNAME .. '\' not found.'
+        return error("User from username \"" .. USERNAME .. "\" not found")
     end
 
     return StrafesNET.GetRobloxInfoFromUserId(body.data[1].id)
 end
 
 function StrafesNET.GetRobloxInfoFromDiscordId(DISCORD_ID)
-    if not DISCORD_ID then return 'empty id' end
-    -- table.foreach(DISCORD_ID, print)
     local headers, body = Request("GET", FIVEMAN_API_URL .. "users/" .. DISCORD_ID, {CacheTTL = 60 * 60 * 24 * 7, MaxRetries = 0})
-    if headers.status == "error" then return headers.messages end
+    if tonumber(headers.code) ~= 200 then
+        return headers, body
+    end
 
     return StrafesNET.GetRobloxInfoFromUserId(body.result.robloxId)
 end
