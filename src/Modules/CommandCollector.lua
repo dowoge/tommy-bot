@@ -1,5 +1,16 @@
-local RELATIVE_PATH_TO_COMMANDS = '../' --this is because the require function will call to a path relative to this current file :D
+local RELATIVE_PATH_TO_COMMANDS = '../' -- this is because the require function will call to a path relative to this current file :D
 local IGNORE_STARTING_FILE_NAME = '_'
+
+local OPERATING_SYSTEM = package.loaded.jit.os
+local OS_TRANSLATIONS = {
+	Windows = {
+		ListDirectory = "dir /b \"./src/%s\"",
+
+	},
+	Linux = {
+		ListDirectory = "ls ./src/%s"
+	}
+}
 
 local CommandCollector = {}
 CommandCollector.__index = CommandCollector
@@ -15,7 +26,7 @@ function CommandCollector.new(Prefix)
 end
 
 function CommandCollector:Get(CommandName)
-	for CommandIndex, CommandData in next, self.Collection do
+	for _, CommandData in next, self.Collection do
 		if CommandName == CommandData.Command.name then
 			return CommandData
 		end
@@ -28,25 +39,27 @@ function CommandCollector:Collect()
 		return
 	end
 
-	local CommandsContainerPath = self.Prefix..'Commands/'
+	local CommandsContainerPath = self.Prefix .. 'Commands/'
 
-	for File in io.popen('ls ./src/'..CommandsContainerPath):lines() do
+	for File in io.popen(OS_TRANSLATIONS[OPERATING_SYSTEM].ListDirectory:format(CommandsContainerPath)):lines() do
 		if File:sub(1, 1) ~= IGNORE_STARTING_FILE_NAME then
-			local Success, Return = pcall(require, RELATIVE_PATH_TO_COMMANDS..CommandsContainerPath..File)
+			local Success, Return = pcall(require, RELATIVE_PATH_TO_COMMANDS .. CommandsContainerPath .. File)
 			if Success then
 				if not Return.Command or not Return.Callback then
-					print('Malformed command data in', CommandsContainerPath..File, 'Reason: returned command data table is missing a Command or Callback field')
+					print('Malformed command data in', CommandsContainerPath .. File,
+						'Reason: returned command data table is missing a Command or Callback field')
 					return
 				end
-				print('Loaded', CommandsContainerPath..File)
-				table.insert(self.Collection, {Command = Return.Command, Callback = Return.Callback})
+				print('Loaded', CommandsContainerPath .. File)
+				table.insert(self.Collection, { Command = Return.Command, Callback = Return.Callback })
 			else
-				print('Error loading', CommandsContainerPath..File, 'Error:', Return)
+				print('Error loading', CommandsContainerPath .. File, 'Error:', Return)
 			end
 		end
 	end
 
-	print('Loaded a total of '..#self.Collection..' '..self.Prefix..' command'..(#self.Collection ~= 1 and 's' or ''))
+	print('Loaded a total of ' .. #self.Collection .. ' ' ..
+	self.Prefix .. ' command' .. (#self.Collection ~= 1 and 's' or ''))
 
 	self.Collected = true
 	return self
