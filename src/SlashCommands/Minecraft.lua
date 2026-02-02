@@ -56,11 +56,13 @@ MinecraftSubCommandHandler:AddSubCommand(MinecraftStatusSubCommand.name, functio
 		return Interaction:reply('There is no data for this Discord server', true)
 	end
 
+    Interaction:replyDeferred()
+
 	local ServerIPStr = ServerMinecraftData.IP .. ':' .. ServerMinecraftData.PORT
 	local Headers, Body = Request("GET", ('https://api.mcsrvstat.us/3/%s'):format(ServerIPStr), nil,
-		{ ["User-Agent"] = "tommy-bot/1.0 Main-Release" })
+		{ ["User-Agent"] = "tommy-bot/1.0 Main-Release" }, {CacheTTL = 60 * 5, MaxRetries = 5})
 	if tonumber(Headers.code) ~= 200 then
-		return error("Something went wrong")
+		return Interaction:reply("Something went wrong", true)
 	end
 	local IsOnline = Body.online
 	local EmbedData
