@@ -5,5 +5,5 @@ Token.lua
 RankConstants.lua
 deps
 sensdb.lua
-minecraft_data.json
+*.json
 .gitignore
