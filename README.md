@@ -2,17 +2,19 @@
 
 ### Steps for hosting
 
-1. Insert an `apikey.lua` file under the `src/modules` folder, make it return a string like so:
+1. Add the `Token.lua` and `APIKeys.lua` files inside `src/Modules`.
 
+2. `Token.lua` should be solely comprised of your Discord bot token. (See example below)
 ```lua
-return 'key'
+return "bot.token"
 ```
 
-2. Insert a `token.lua` file under the `src/modules` folder, make it also return a string like said above.
-
-3. Run `start.bat` to start the bot.
-
-###### Note: `token.lua` should be your discord login bot token and `apikey.lua` should be your StrafesNET API key.
+3. `APIKeys.lua` should contain any other external API key. Currently only the following are required:
+```lua
+return {
+    StrafesNET = "strafes_aabbcc"
+}
+```
 
 ### T.O.S.
 TBD
