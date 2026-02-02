@@ -62,6 +62,9 @@ local function Callback(Interaction, Command, Args)
     if Interaction.user.id ~= "697004725123416095" then
         return Interaction:reply("You are not allowed to use this command", true)
     end
+
+    Interaction:replyDeferred()
+
     local UserInfo
     local ErrorMessage = "Something went very very wrong"
     if Args.username then
@@ -99,10 +102,8 @@ local function Callback(Interaction, Command, Args)
     end
 
     if UserInfo == nil then
-        error(ErrorMessage)
+        return Interaction:reply(ErrorMessage, true)
     end
-
-    Interaction:replyDeferred()
 
     local GameId, StyleId = StrafesNET.GameIds[Args.game], StrafesNET.Styles[Args.style]
 
@@ -174,13 +175,13 @@ local function Callback(Interaction, Command, Args)
         local MapCompletion = TimeData.MapCompletion
         local PlacementString = Placement .. "/" .. MapCompletion
 
-        local RankPoints = TimeData.RankPoints
+        local RankPoints = string.format("%.8f", TimeData.RankPoints)
         local Skill = StrafesNET.FormatSkill(TimeData.Skill)
 
         local TimeString = StrafesNET.FormatTime(TimeData.Time.time)
 
         local Map = TimeData.Time.map
-        local MapString = Map.display_name .. " (" .. Map.id .. ")"
+        local MapString = Map.display_name .. " (" .. SafeNumberToString(Map.id) .. ")"
 
         FinalText = FinalText .. Pad(MapString, 50) .. " | " .. Pad(RankPoints) .. " | " .. Pad(Skill, 7) .. " | " .. Pad(PlacementString, 14) .. " | " .. TimeString .. "\n"
     end

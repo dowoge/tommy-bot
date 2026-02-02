@@ -91,6 +91,8 @@ local function GuessDateFromAssetID(InstanceID, AssetID)
 end
 
 local function Callback(Interaction, Command, Args)
+    Interaction:replyDeferred()
+
     local UserInfo
     local ErrorMessage = "Something went very very wrong"
     if Args then
@@ -130,10 +132,8 @@ local function Callback(Interaction, Command, Args)
     end
 
     if UserInfo == nil then
-        error(ErrorMessage)
+        return Interaction:reply(ErrorMessage, true)
     end
-
-    Interaction:replyDeferred()
 
     local description = UserInfo.description == '' and 'This user has no description' or UserInfo.description
     local created = tostring(Date.fromISO(UserInfo.created):toSeconds())
