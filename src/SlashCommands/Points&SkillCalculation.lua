@@ -58,8 +58,13 @@ local SortFunctions = {
     skill = SkillSort
 }
 
+local AllowList = {
+    ["697004725123416095"] = true,
+    ["260016427900076033"] = true
+}
+
 local function Callback(Interaction, Command, Args)
-    if Interaction.user.id ~= "697004725123416095" then
+    if not AllowList[Interaction.user.id] then
         return Interaction:reply("You are not allowed to use this command", true)
     end
 
