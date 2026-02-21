@@ -6,8 +6,6 @@ Discordia.extensions()
 
 local StrafesNET = require('../Modules/StrafesNET.lua')
 
-local SafeNumberToString = StrafesNET.SafeNumberToString
-
 local UserCommand = SlashCommandTools.slashCommand('user', 'Looks up specified user on Roblox')
 
 local UsernameOption = SlashCommandTools.string('username', 'Username to look up')
@@ -179,15 +177,18 @@ local function Callback(Interaction, Command, Args)
     -- local badgesDates = {}
 
     local firstBadge, firstBadgeDate = 0, math.huge
-    for _, badge in next, badgeData do
-        local badgeId = badge.badgeId
-        local awardedDate = tonumber(Date.fromISO(badge.awardedDate):toSeconds())
-        if firstBadgeDate > awardedDate then
-            firstBadge = badgeId
-            firstBadgeDate = awardedDate
+    if badgeData then
+        for _, badge in next, badgeData do
+            local badgeId = badge.badgeId
+            local awardedDate = tonumber(Date.fromISO(badge.awardedDate):toSeconds())
+            if firstBadgeDate > awardedDate then
+                firstBadge = badgeId
+                firstBadgeDate = awardedDate
+            end
+            -- badgesDates[badgeId]=awardedDate
         end
-        -- badgesDates[badgeId]=awardedDate
     end
+
     local userThumbnailHeaders, userThumbnailBody = StrafesNET.GetUserThumbnail(id)
     local userThumbnail = userThumbnailBody.data[1]
 
