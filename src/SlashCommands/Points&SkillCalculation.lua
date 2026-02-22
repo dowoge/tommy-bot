@@ -141,6 +141,8 @@ local function Callback(Interaction, Command, Args)
     local MapCompletions = StrafesNET.GetMapsCompletionCounts(MapIds, GameId, 0, StyleId)
 
     local TotalPoints = 0
+    local SkillNumerator = 0
+    local SkillDenominator = 0
     local TimesConcise = {}
 
     for _, Time in next, Times do
@@ -154,6 +156,8 @@ local function Callback(Interaction, Command, Args)
             local Skill = StrafesNET.CalculateSkill(Placement, MapCompletion)
 
             TotalPoints = TotalPoints + RankPoints
+            SkillNumerator = SkillNumerator + (MapCompletion - Placement)
+            SkillDenominator = SkillDenominator + (MapCompletion - 1)
 
             table.insert(TimesConcise, {
                 Time = Time,
@@ -170,17 +174,23 @@ local function Callback(Interaction, Command, Args)
 
     table.sort(TimesConcise, SortFunction)
 
+    local WeightedSkill = 0
+    if NTimes >= 20 and SkillDenominator > 0 then
+        WeightedSkill = SkillNumerator / SkillDenominator
+    end
+
     local FinalText = "Rank calculation for " .. UserInfo.displayName .. " (@" .. UserInfo.name .. ") / " .. UserInfo.id .. ": ".. StrafesNET.GameIdsString[GameId]..", "..StrafesNET.StylesString[StyleId] .."\n" ..
                         "Points: " .. TotalPoints .. "\n" ..
+                        "Skill: " .. StrafesNET.FormatSkill(WeightedSkill) .. "\n" ..
                         "Times: " .. NTimes .. "\n\n" ..
-                        Pad("Map", 50) .. " | " .. Pad("Points") .. " | " .. Pad("Skill", 7) .. " | " .. Pad("Placement", 14) .. " | Time\n"
+                        Pad("Map", 50) .. " | " .. Pad("Points") .. " | " .. Pad("Skill", 11) .. " | " .. Pad("Placement", 14) .. " | Time\n"
 
     for _, TimeData in next, TimesConcise do
         local Placement = TimeData.Placement
         local MapCompletion = TimeData.MapCompletion
         local PlacementString = Placement .. "/" .. MapCompletion
 
-        local RankPoints = string.format("%.8f", TimeData.RankPoints)
+        local RankPoints = string.format("%.11f", TimeData.RankPoints)
         local Skill = StrafesNET.FormatSkill(TimeData.Skill)
 
         local TimeString = StrafesNET.FormatTime(TimeData.Time.time)
