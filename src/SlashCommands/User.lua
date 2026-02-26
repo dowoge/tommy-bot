@@ -16,17 +16,31 @@ UserCommand:addOption(UsernameOption)
 UserCommand:addOption(UserIdOption)
 UserCommand:addOption(MemberOption)
 
-Badges = {
+local BhopBadges = {
     '275640532',  --Bhop, pre-group
     '363928432',  --Surf, pre-group
     '2124614454', --Bhop, post-group
     '2124615096', --Surf, post-group
 }
-BadgesToName = {
-    [Badges[1]] = 'old bhop',
-    [Badges[2]] = 'old surf',
-    [Badges[3]] = 'new bhop',
-    [Badges[4]] = 'new surf',
+local BhopBadgesToName = {
+    [BhopBadges[1]] = 'old bhop',
+    [BhopBadges[2]] = 'old surf',
+    [BhopBadges[3]] = 'new bhop',
+    [BhopBadges[4]] = 'new surf',
+}
+local PopularBadges = {
+    "2124485633",		-- Arsenal "Stepping Stone"				190M won, made Dec 2018
+    "66918518",			-- NDS "Survived a Disaster"			418M won, made Dec 2011
+    "2904819966736756",	-- RIVALS "Welcome!"					335M won, made June 2024
+    "161222105",		-- Mega Marble Run Pit "10 credits"		 84M won, made June 2014
+    "2124780104",		-- CAC "Catalog Avatar Creator"			333M won, made July 2021
+    "2127839123",		-- Evade "Flawless Survival"			 87M won, made August 2022
+    "2124935409",		-- PLS DONATE "Welcome!"				335M won, made February 2022
+    "282537385",		-- Epic Minigames "Welcome"				300M won, made August 2015
+    "174605507",		-- Super Bomb Survival "It's A Blast!"	 52M won, made August 2014
+    "176685910",		-- WaaPP "Pizza Boxer"					 38M won, made September 2014
+    "697770868",		-- Miner's Haven "Welcome!"				 22M won, made March 2017
+    "2124445748",		-- Broken Bones "Alpha Tester"			137M won, made December 2018
 }
 local function round(x, n)
     return string.format('%.' .. (n or 0) .. 'f', x)
@@ -142,7 +156,7 @@ local function Callback(Interaction, Command, Args)
     local name = UserInfo.name
     local displayName = UserInfo.displayName
 
-    local usernameHistoryHeaders, usernameHistoryBody = StrafesNET.GetUserUsernameHistory(id)
+    local _, usernameHistoryBody = StrafesNET.GetUserUsernameHistory(id)
     local usernameHistory = usernameHistoryBody.data or {}
     local usernameHistoryTable = {}
     for index, usernameObj in next, usernameHistory do
@@ -171,7 +185,7 @@ local function Callback(Interaction, Command, Args)
         end
     end
 
-    local _, badgeRequest = StrafesNET.GetBadgesAwardedDates(id, Badges)
+    local _, badgeRequest = StrafesNET.GetBadgesAwardedDates(id, BhopBadges)
     local badgeData = badgeRequest.data
 
     -- local badgesDates = {}
@@ -187,6 +201,39 @@ local function Callback(Interaction, Command, Args)
             end
             -- badgesDates[badgeId]=awardedDate
         end
+    end
+
+    local _, popularBadgeRequest = StrafesNET.GetBadgesAwardedDates(id, PopularBadges)
+    local popularBadgeData = popularBadgeRequest.data
+
+    local oldestThree = {{math.huge}, {math.huge}, {math.huge}}
+    if popularBadgeData then
+        for _, badge in next, popularBadgeData do
+            local badgeId = badge.badgeId
+            local awardedDate = tonumber(Date.fromISO(badge.awardedDate):toSeconds())
+            for i = 1, 3 do
+                if oldestThree[i][1] > awardedDate then
+                    -- this code is vile
+                    table.insert(oldestThree, i, {awardedDate, badgeId})
+                    oldestThree[4] = nil
+                    break
+                end
+            end
+        end
+    end
+
+    local oldestThreeText
+    if oldestThree[1][1] ~= math.huge then
+        oldestThreeText = {}
+        for i = 1, 3 do
+            local data = oldestThree[i]
+            if data[1] ~= math.huge then
+                oldestThreeText[i] = ToYMD(round(data[1])) .. " ([" .. data[2] .. "](https://www.roblox.com/badges/" .. data[2] .. "))"
+            end
+        end
+        oldestThreeText = table.concat(oldestThreeText, "\n")
+    else
+        oldestThreeText = "None earned"
     end
 
     local userThumbnailHeaders, userThumbnailBody = StrafesNET.GetUserThumbnail(id)
@@ -211,9 +258,9 @@ local function Callback(Interaction, Command, Args)
         }
     }
     if firstBadge and firstBadgeDate ~= math.huge then
-        table.insert(embed.fields, { name = 'FQG', value = BadgesToName[firstBadge], inline = true })
-        table.insert(embed.fields, { name = 'Joined', value = '<t:' .. round(firstBadgeDate) .. ':R>', inline = true })
+        table.insert(embed.fields, { name = 'First Quat Game', value = BhopBadgesToName[firstBadge] .. '\n<t:' .. round(firstBadgeDate) .. ':R>', inline = true })
     end
+    table.insert(embed.fields, { name = 'Oldest Popular Badges', value = oldestThreeText, inline = true })
     Interaction:reply({ embed = embed })
 end
 
