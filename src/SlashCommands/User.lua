@@ -29,7 +29,7 @@ local BhopBadgesToName = {
     [BhopBadges[4]] = 'new surf',
 }
 local PopularBadges = {
-    "2124485633",		-- Arsenal "Stepping Stone"				190M won, made Dec 2018
+    "2124444712",		-- Arsenal "Stepping Stone"				190M won, made Dec 2018
     "66918518",			-- NDS "Survived a Disaster"			418M won, made Dec 2011
     "2904819966736756",	-- RIVALS "Welcome!"					335M won, made June 2024
     "161222105",		-- Mega Marble Run Pit "10 credits"		 84M won, made June 2014
