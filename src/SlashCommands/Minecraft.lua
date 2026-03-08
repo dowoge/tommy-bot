@@ -5,8 +5,6 @@ local Request = HttpRequest.Request
 local SubCommandHandler = require('../Modules/SubCommandHandler.lua')
 Discordia.extensions()
 
-local ApplicationCommandOptionTypes = Discordia.enums.appCommandOptionType
-
 local SlashCommandTools = require('discordia-slash').util.tools()
 
 local MinecraftSubCommandHandler = SubCommandHandler.new()
