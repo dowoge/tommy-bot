@@ -1,6 +1,8 @@
 local Discordia = require('discordia')
 local Token = require('./Modules/Token.lua')
 local CommandCollector = require('./Modules/CommandCollector.lua')
+require('discordia-slash')
+
 local Client = Discordia.Client():useApplicationCommands()
 Discordia.extensions()
 
