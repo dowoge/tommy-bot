@@ -30,6 +30,7 @@ StyleOption = StyleOption:setRequired(true)
 local SortOption = SlashCommandTools.string("sort", "Which sorting method to use on the times list")
 SortOption:addChoice(SlashCommandTools.choice("Points", "points"))
 SortOption:addChoice(SlashCommandTools.choice("Skill", "skill"))
+SortOption:addChoice(SlashCommandTools.choice("Placement", "placement"))
 
 CalculateCommand:addOption(GameOption)
 CalculateCommand:addOption(StyleOption)
@@ -53,9 +54,14 @@ local function SkillSort(Time1, Time2)
     return Time1.Skill < Time2.Skill
 end
 
+local function PlacementSort(Time1, Time2)
+    return Time1.Placement < Time2.Placement
+end
+
 local SortFunctions = {
     points = RankPointsSort,
-    skill = SkillSort
+    skill = SkillSort,
+    placement = PlacementSort
 }
 
 local AllowList = {
