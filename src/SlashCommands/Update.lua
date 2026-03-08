@@ -32,6 +32,10 @@ local function Callback(Interaction, Command, Args)
 	Interaction:reply(OutputString, true)
 	GitPullOutputHandle:close()
 
+	if OutputString == "Already up to date.\n" then
+		return
+	end
+
 	-- start the bot after 3 seconds
 	local StartFileName = START_FILE_TRANSLATIONS[OPERATING_SYSTEM].FileName
 	local WaitString = WAIT_TRANSLATIONS[OPERATING_SYSTEM].FileName
