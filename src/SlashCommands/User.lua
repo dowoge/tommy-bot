@@ -23,10 +23,10 @@ local BhopBadges = {
     '2124615096', --Surf, post-group
 }
 local BhopBadgesToName = {
-    [BhopBadges[1]] = 'old bhop',
-    [BhopBadges[2]] = 'old surf',
-    [BhopBadges[3]] = 'new bhop',
-    [BhopBadges[4]] = 'new surf',
+    [BhopBadges[1]] = 'Old bhop',
+    [BhopBadges[2]] = 'Old surf',
+    [BhopBadges[3]] = 'New bhop',
+    [BhopBadges[4]] = 'New surf',
 }
 local PopularBadges = {
     "2124444712",		-- Arsenal "Stepping Stone"				190M won, made Dec 2018
