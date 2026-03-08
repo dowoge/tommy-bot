@@ -55,7 +55,7 @@ local function SkillSort(Time1, Time2)
 end
 
 local function PlacementSort(Time1, Time2)
-    return Time1.Placement < Time2.Placement
+    return Time2.Placement < Time1.Placement
 end
 
 local SortFunctions = {
