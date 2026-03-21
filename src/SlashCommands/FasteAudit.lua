@@ -38,9 +38,9 @@ local function GetFasteRoleId()
 	for _, Role in next, Body.roles do
 		if Role.name and Role.name:lower() == "faste" then
 			FasteId = Role.id
-			FasteRank = Role.rank
+			FasteRank = tonumber(Role.rank)
 		end
-		local RoleRank = Role.rank or 0
+		local RoleRank = tonumber(Role.rank) or 0
 		if RoleRank > 0 and (LowestRank == nil or RoleRank < LowestRank) then
 			MemberRoleId = Role.id
 			LowestRank = RoleRank
@@ -291,7 +291,7 @@ local function Callback(Interaction, Command, Args)
 						for _, GroupEntry in next, GroupBody.data do
 							if GroupEntry.group and tostring(GroupEntry.group.id) == GROUP_ID then
 								InGroup = true
-								GroupRoleRank = GroupEntry.role and GroupEntry.role.rank
+								GroupRoleRank = GroupEntry.role and tonumber(GroupEntry.role.rank)
 								GroupRoleName = GroupEntry.role and GroupEntry.role.name
 								break
 							end
