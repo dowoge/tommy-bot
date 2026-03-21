@@ -10,6 +10,8 @@ local MODE_ID = 0
 local AUTOHOP_WR_THRESHOLD = 10
 local OTHER_STYLE_WR_THRESHOLD = 50
 local ALLOWED_USER_ID = "697004725123416095"
+local BHOP_SERVER_ID = "167423382697148416"
+local DISCORD_FASTE_ROLE_ID = "167799859309445120"
 
 local ALL_STYLES = {}
 for _, StyleId in next, StrafesNET.BhopStyles do
@@ -18,12 +20,6 @@ end
 for _, StyleId in next, StrafesNET.SurfStyles do
 	ALL_STYLES[StyleId] = true
 end
-
-local SORTED_STYLES = {}
-for StyleId in next, ALL_STYLES do
-	table.insert(SORTED_STYLES, StyleId)
-end
-table.sort(SORTED_STYLES)
 
 local function Pad(String, Padding)
 	Padding = Padding or 20
@@ -80,16 +76,6 @@ local function GetUserWorldRecordCounts(UserId)
 	return GameStyleCounts, nil
 end
 
-local function MergeStyleCounts(GameStyleCounts)
-	local Merged = {}
-	for _, StyleCounts in next, GameStyleCounts do
-		for StyleId, Count in next, StyleCounts do
-			Merged[StyleId] = (Merged[StyleId] or 0) + Count
-		end
-	end
-	return Merged
-end
-
 local function CheckEligibility(GameStyleCounts)
 	for GameId, StyleCounts in next, GameStyleCounts do
 		local GameName = StrafesNET.GameIdsString[GameId]
@@ -111,17 +97,47 @@ local function CheckEligibility(GameStyleCounts)
 	return false, nil
 end
 
-local function FormatTopStyle(StyleCounts)
-	local BestStyleId, BestCount = nil, 0
-	for _, StyleId in next, SORTED_STYLES do
-		local Count = StyleCounts[StyleId] or 0
-		if Count > BestCount then
-			BestStyleId = StyleId
-			BestCount = Count
-		end
+local function FormatEntry(Entry)
+	local UserString = Entry.DisplayName .. " (@" .. Entry.Username .. ")"
+	local Status = Entry.IsEligible and "ELIGIBLE" or "NOT ELIGIBLE"
+	if Entry.IsEligible and Entry.EligibilityReason then
+		Status = Status .. " (" .. Entry.EligibilityReason .. ")"
 	end
-	if not BestStyleId then return "None" end
-	return StrafesNET.StylesString[BestStyleId] .. ": " .. BestCount
+	return Pad(UserString, 46) .. " | " .. Status .. "\n"
+end
+
+local function ProcessDiscordRole(Guild, Entry, Action)
+	local Ok, DiscordId = pcall(StrafesNET.GetDiscordIdFromRobloxId, Entry.UserId)
+	if not Ok then DiscordId = nil end
+	local UserPrefix = Entry.DisplayName .. " (@" .. Entry.Username .. ") [" .. Entry.UserId .. "]"
+	if not DiscordId then
+		return UserPrefix .. " | No linked Discord account"
+	end
+
+	local Member = Guild:getMember(DiscordId)
+	if not Member then
+		return UserPrefix .. " | <@" .. DiscordId .. "> | Not in server"
+	end
+
+	if Action == "add" then
+		if Member:hasRole(DISCORD_FASTE_ROLE_ID) then
+			return UserPrefix .. " | <@" .. DiscordId .. "> | Already has role"
+		end
+		local Success, RoleErr = Member:addRole(DISCORD_FASTE_ROLE_ID)
+		if Success then
+			return UserPrefix .. " | <@" .. DiscordId .. "> | Added faste role"
+		end
+		return UserPrefix .. " | <@" .. DiscordId .. "> | Add failed: " .. tostring(RoleErr)
+	elseif Action == "remove" then
+		if not Member:hasRole(DISCORD_FASTE_ROLE_ID) then
+			return UserPrefix .. " | <@" .. DiscordId .. "> | Doesn't have role"
+		end
+		local Success, RoleErr = Member:removeRole(DISCORD_FASTE_ROLE_ID)
+		if Success then
+			return UserPrefix .. " | <@" .. DiscordId .. "> | Removed faste role"
+		end
+		return UserPrefix .. " | <@" .. DiscordId .. "> | Remove failed: " .. tostring(RoleErr)
+	end
 end
 
 local function Callback(Interaction, Command, Args)
@@ -158,7 +174,7 @@ local function Callback(Interaction, Command, Args)
 			table.insert(ErrorLines, {Username = Username, DisplayName = DisplayName, UserId = UserId, Error = ErrorMsg})
 		else
 			local IsEligible, EligibilityReason = CheckEligibility(GameStyleCounts)
-			local Entry = {Username = Username, DisplayName = DisplayName, UserId = UserId, StyleCounts = MergeStyleCounts(GameStyleCounts), IsEligible = IsEligible, EligibilityReason = EligibilityReason}
+			local Entry = {Username = Username, DisplayName = DisplayName, UserId = UserId, IsEligible = IsEligible, EligibilityReason = EligibilityReason}
 
 			if IsEligible then
 				EligibleCount = EligibleCount + 1
@@ -174,15 +190,6 @@ local function Callback(Interaction, Command, Args)
 		.. "Total: " .. #Members .. " | Eligible: " .. EligibleCount .. " | Not Eligible: " .. IneligibleCount .. " | Errors: " .. ErrorCount .. "\n"
 		.. "Eligibility: Autohop " .. AUTOHOP_WR_THRESHOLD .. "+ WRs OR any other style " .. OTHER_STYLE_WR_THRESHOLD .. "+ WRs\n\n"
 
-	local function FormatEntry(Entry)
-		local UserString = Entry.DisplayName .. " (@" .. Entry.Username .. ")"
-		local Status = Entry.IsEligible and "ELIGIBLE" or "NOT ELIGIBLE"
-		if Entry.IsEligible and Entry.EligibilityReason then
-			Status = Status .. " (" .. Entry.EligibilityReason .. ")"
-		end
-		return Pad(UserString, 46) .. " | " .. Pad(FormatTopStyle(Entry.StyleCounts), 20) .. " | " .. Status .. "\n"
-	end
-
 	if #IneligibleLines > 0 then
 		FinalText = FinalText .. "--- NOT ELIGIBLE (" .. IneligibleCount .. ") ---\n"
 		for _, Entry in next, IneligibleLines do
@@ -193,7 +200,6 @@ local function Callback(Interaction, Command, Args)
 
 	if #EligibleLines > 0 then
 		FinalText = FinalText .. "--- ELIGIBLE (" .. EligibleCount .. ") ---\n"
-
 		for _, Entry in next, EligibleLines do
 			FinalText = FinalText .. FormatEntry(Entry)
 		end
@@ -267,7 +273,6 @@ local function Callback(Interaction, Command, Args)
 						Username = Username,
 						DisplayName = Username,
 						UserId = CandidateId,
-						StyleCounts = MergeStyleCounts(GameStyleCounts),
 						IsEligible = true,
 						EligibilityReason = EligibilityReason
 					}
@@ -303,7 +308,6 @@ local function Callback(Interaction, Command, Args)
 
 		if #DiscoveryLines > 0 then
 			FinalText = FinalText .. "--- POTENTIAL NEW FASTE (" .. #DiscoveryLines .. ") ---\n"
-	
 			for _, Entry in next, DiscoveryLines do
 				FinalText = FinalText .. FormatEntry(Entry)
 			end
@@ -314,16 +318,15 @@ local function Callback(Interaction, Command, Args)
 
 		if #UnavailableLines > 0 then
 			FinalText = FinalText .. "--- ELIGIBLE BUT UNAVAILABLE (" .. #UnavailableLines .. ") ---\n"
-	
 			for _, Entry in next, UnavailableLines do
 				local UserString = Entry.DisplayName .. " (@" .. Entry.Username .. ")"
-				FinalText = FinalText .. Pad(UserString, 46) .. " | " .. Pad(FormatTopStyle(Entry.StyleCounts), 20) .. " | " .. Entry.UnavailableReason .. "\n"
+				FinalText = FinalText .. Pad(UserString, 46) .. " | " .. Entry.UnavailableReason .. "\n"
 			end
 			FinalText = FinalText .. "\n"
 		end
 	end
 
-	-- Cleanup: Roblox role management + Discord role removal (when cleanup = true)
+	-- Cleanup: Roblox + Discord role management (when cleanup = true)
 	if Args.cleanup then
 		-- Roblox demotions (ineligible users)
 		local RobloxChangeLines = {}
@@ -355,6 +358,39 @@ local function Callback(Interaction, Command, Args)
 		if #RobloxChangeLines > 0 then
 			FinalText = FinalText .. "--- ROBLOX ROLE CHANGES ---\n"
 			for _, Line in next, RobloxChangeLines do
+				FinalText = FinalText .. Line .. "\n"
+			end
+			FinalText = FinalText .. "\n"
+		end
+
+		-- Discord role management
+		local Guild = Interaction.client:getGuild(BHOP_SERVER_ID)
+		local DiscordChangeLines = {}
+
+		if Guild then
+			-- Remove Discord role from ineligible users
+			for _, Entry in next, IneligibleLines do
+				table.insert(DiscordChangeLines, ProcessDiscordRole(Guild, Entry, "remove"))
+			end
+
+			-- Add Discord role to promoted discovery candidates
+			if not DiscoveryFailed then
+				for _, Entry in next, DiscoveryLines do
+					table.insert(DiscordChangeLines, ProcessDiscordRole(Guild, Entry, "add"))
+				end
+			end
+
+			-- Ensure existing eligible members have Discord role
+			for _, Entry in next, EligibleLines do
+				table.insert(DiscordChangeLines, ProcessDiscordRole(Guild, Entry, "add"))
+			end
+		else
+			table.insert(DiscordChangeLines, "Could not find bhop Discord server")
+		end
+
+		if #DiscordChangeLines > 0 then
+			FinalText = FinalText .. "--- DISCORD ROLE CHANGES ---\n"
+			for _, Line in next, DiscordChangeLines do
 				FinalText = FinalText .. Line .. "\n"
 			end
 			FinalText = FinalText .. "\n"

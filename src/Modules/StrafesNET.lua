@@ -455,6 +455,16 @@ function StrafesNET.GetRobloxInfoFromDiscordId(DISCORD_ID)
     return StrafesNET.GetRobloxInfoFromUserId(body.result.robloxId)
 end
 
+function StrafesNET.GetDiscordIdFromRobloxId(ROBLOX_ID)
+    local headers, body = Request("GET", FIVEMAN_API_URL .. "users/from_roblox/" .. ROBLOX_ID,
+        nil, { ["api-key"] = APIKeys.Fiveman },
+        {CacheTTL = 60 * 60 * 24 * 7, MaxRetries = 0})
+    if tonumber(headers.code) ~= 200 then
+        return nil
+    end
+    return tostring(body.result.discordId)
+end
+
 function StrafesNET.GetUserOnlineStatus(USER_ID)
     if not USER_ID then return 'empty id' end
 
