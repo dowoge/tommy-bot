@@ -88,6 +88,8 @@ local ROBLOX_PRESENCE_URL = 'https://presence.roblox.com/v1/'
 local ROBLOX_THUMBNAIL_URL = 'https://thumbnails.roblox.com/v1/'
 local ROBLOX_INVENTORY_API = 'https://inventory.roblox.com/v1/'
 local ROBLOX_GROUPS_ROLES_URL = 'https://groups.roblox.com/v2/users/%s/groups/roles'
+local ROBLOX_GROUPS_API_URL = 'https://groups.roblox.com/v1/groups/'
+local ROBLOX_OPEN_CLOUD_URL = 'https://apis.roblox.com/cloud/v2/'
 
 ROBLOX_THUMBNAIL_SIZES = {
     [48] = '48x48',
@@ -500,6 +502,81 @@ function StrafesNET.GetUserThumbnail(USER_ID, TYPE, SIZE)
 
     return Request("GET", ROBLOX_THUMBNAIL_URL .. "users/" .. _TYPE,
         { userIds = USER_ID, size = _SIZE, format = "Png", isCircular = false }, {CacheTTL = 60 * 60 * 4})
+end
+
+function StrafesNET.GetGroupRoles(GroupId)
+    return Request("GET", ROBLOX_GROUPS_API_URL .. GroupId .. "/roles", {CacheTTL = 60 * 60})
+end
+
+function StrafesNET.GetGroupRoleMembers(GroupId, RoleSetId, Limit, Cursor)
+    local Params = { limit = Limit or 100, sortOrder = "Asc" }
+    if Cursor and Cursor ~= "" then
+        Params.cursor = Cursor
+    end
+    return Request("GET", ROBLOX_GROUPS_API_URL .. GroupId .. "/roles/" .. RoleSetId .. "/users", Params, {CacheTTL = 60 * 5})
+end
+
+function StrafesNET.GetAllGroupRoleMembers(GroupId, RoleSetId)
+    local Members = {}
+    local Cursor = ""
+    repeat
+        local Headers, Body = StrafesNET.GetGroupRoleMembers(GroupId, RoleSetId, 100, Cursor)
+        if tonumber(Headers.code) >= 400 then
+            error("Failed to fetch role members (HTTP " .. tostring(Headers.code) .. ")")
+        end
+        if not Body or not Body.data then
+            error("Failed to fetch role members (no data)")
+        end
+        for _, Member in next, Body.data do
+            table.insert(Members, Member)
+        end
+        Cursor = Body.nextPageCursor or ""
+    until Cursor == ""
+    return Members
+end
+
+function StrafesNET.GetUserGroups(UserId)
+    local RequestUrl = ROBLOX_GROUPS_ROLES_URL:format(UserId)
+    return Request("GET", RequestUrl, {CacheTTL = 60 * 60})
+end
+
+function StrafesNET.UpdateGroupMemberRole(GroupId, UserId, RoleId)
+    local Url = ROBLOX_OPEN_CLOUD_URL .. "groups/" .. GroupId .. "/memberships/" .. UserId
+    local OpenCloudHeaders = {
+        ["x-api-key"] = APIKeys.RobloxOpenCloud,
+        ["Content-Type"] = "application/json"
+    }
+    local Body = { role = "groups/" .. GroupId .. "/roles/" .. RoleId }
+    return Request("PATCH", Url, nil, OpenCloudHeaders, Body, {NoCache = true, MaxRetries = 1})
+end
+
+function StrafesNET.GetRecentWorldRecords(Page)
+    return Request("GET", "https://strafes.fiveman1.net/public-api/wrs",
+        { page = Page or 1, course = 0 }, {CacheTTL = 60 * 5})
+end
+
+function StrafesNET.GetAllUserWorldRecords(UserId, GameId, ModeId)
+    local Records = {}
+    local CurrentPage = 1
+
+    while true do
+        local Headers, Response = StrafesNET.GetWorldRecords(UserId, nil, GameId, ModeId, nil, 100, CurrentPage)
+        if tonumber(Headers.code) >= 400 then
+            return nil, "HTTP error " .. tostring(Headers.code)
+        end
+        if not Response or not Response.data then
+            break
+        end
+        for _, Record in next, Response.data do
+            table.insert(Records, Record)
+        end
+        if #Response.data < 100 then
+            break
+        end
+        CurrentPage = CurrentPage + 1
+    end
+
+    return Records, nil
 end
 
 return StrafesNET

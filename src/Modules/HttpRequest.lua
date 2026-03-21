@@ -100,7 +100,8 @@ end
 
 local METHODS = {
     GET = true,
-    POST = true
+    POST = true,
+    PATCH = true
 }
 
 local function NormalizeQueryValue(Value)
