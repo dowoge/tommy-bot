@@ -192,12 +192,10 @@ local function TryDecodeJson(Body)
         if type(JsonString) ~= "string" then
             return JsonString
         end
-        -- Quote all bare integers in JSON (key:value pairs and array elements)
-        JsonString = JsonString:gsub(":%s*(%d+)%s*([,}%]])", function(NumberValue, After)
-            return ":\"" .. NumberValue .. "\"" .. After
-        end)
-        JsonString = JsonString:gsub("([%[,])%s*(%d+)%s*([%],])", function(Before, NumberValue, After)
-            return Before .. "\"" .. NumberValue .. "\"" .. After
+        -- Quote all bare numbers in JSON by matching digits that appear after JSON
+        -- structural characters (not inside strings)
+        JsonString = JsonString:gsub("([:%[,])(%s*)(%d+%.?%d*)", function(Before, Space, NumberValue)
+            return Before .. Space .. "\"" .. NumberValue .. "\""
         end)
         return JsonString
     end
