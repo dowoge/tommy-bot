@@ -343,7 +343,7 @@ function StrafesNET.GetMapCompletionCount(MapId, GameId, ModeId, StyleId)
     if tonumber(Headers.code) >= 400 then
         return error("HTTP Error while getting map completion count")
     end
-    return tonumber(Response.pagination.total_items)
+    return Response.pagination.total_items
 end
 
 function StrafesNET.GetMapsCompletionCounts(MapIds, GameId, ModeId, StyleId)
@@ -366,7 +366,7 @@ function StrafesNET.GetAllUserTimes(UserId, GameId, ModeId, StyleId)
         Times[Time.id] = Time
     end
     
-    local TotalPages = tonumber(Response.pagination.total_pages)
+    local TotalPages = Response.pagination.total_pages
     while CurrentPage < TotalPages do
         CurrentPage = CurrentPage + 1
 

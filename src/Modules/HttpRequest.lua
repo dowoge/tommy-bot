@@ -188,14 +188,24 @@ local function CreateHeaders(Headers) -- {Name = Value, ...}
 end
 
 local function TryDecodeJson(Body)
-    local function QuoteAllNumbers(JsonString)
+    local function QuoteIdNumbers(JsonString)
         if type(JsonString) ~= "string" then
             return JsonString
         end
-        return JsonString:gsub("%d+", "\"%0\"")
+        -- Quote ID-like key:value pairs
+        JsonString = JsonString:gsub("\"([%w_]+)\"%s*:%s*(%d+)", function(Key, NumberValue)
+            local LowerKey = Key:lower()
+            if LowerKey == "id" or LowerKey:sub(-3) == "_id" or LowerKey:sub(-2) == "id" then
+                return "\"" .. Key .. "\":\"" .. NumberValue .. "\""
+            end
+            return "\"" .. Key .. "\":" .. NumberValue
+        end)
+        -- Quote large integers (15+ digits) in arrays to prevent precision loss
+        JsonString = JsonString:gsub("([:%[,])%s*(%d%d%d%d%d%d%d%d%d%d%d%d%d%d%d+)", "%1\"%2\"")
+        return JsonString
     end
 
-    local PreparedBody = QuoteAllNumbers(Body)
+    local PreparedBody = QuoteIdNumbers(Body)
     local Success, Result = pcall(json.decode, PreparedBody)
     if not Success then
         return Body

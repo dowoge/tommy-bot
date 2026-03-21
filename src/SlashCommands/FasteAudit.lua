@@ -2,8 +2,10 @@ local SlashCommandTools = require('discordia-slash').util.tools()
 local StrafesNET = require('../Modules/StrafesNET.lua')
 
 local FasteAuditCommand = SlashCommandTools.slashCommand('fasteaudit', 'Audits faste role members for world record eligibility')
-local CleanupOption = SlashCommandTools.boolean('cleanup', 'Remove Discord faste role from ineligible users')
+local CleanupOption = SlashCommandTools.boolean('cleanup', 'Perform Roblox and Discord role changes')
+local DryRunOption = SlashCommandTools.boolean('dryrun', 'Preview cleanup changes without applying them')
 FasteAuditCommand:addOption(CleanupOption)
+FasteAuditCommand:addOption(DryRunOption)
 
 local GROUP_ID = "2607715"
 local MODE_ID = 0
@@ -28,9 +30,9 @@ local function Pad(String, Padding)
 end
 
 local function GetFasteRoleId()
-	local _, Body = StrafesNET.GetGroupRoles(GROUP_ID)
+	local Headers, Body = StrafesNET.GetGroupRoles(GROUP_ID)
 	if not Body or not Body.roles then
-		error("Failed to fetch group roles")
+		error("Failed to fetch group roles (HTTP " .. tostring(Headers and Headers.code) .. ")")
 	end
 	local FasteId, FasteRank
 	local MemberRoleId
@@ -106,21 +108,24 @@ local function FormatEntry(Entry)
 	return Pad(UserString, 46) .. " | " .. Status .. "\n"
 end
 
-local function ProcessDiscordRole(Guild, Entry, Action)
+local function ProcessDiscordRole(Guild, Entry, Action, DryRun)
+	local DryRunPrefix = DryRun and "[DRY RUN] " or ""
 	local Ok, DiscordIds = pcall(StrafesNET.GetDiscordIdFromRobloxId, Entry.UserId)
 	if not Ok or not DiscordIds or #DiscordIds == 0 then
-		return { Entry.DisplayName .. " (@" .. Entry.Username .. ") [" .. Entry.UserId .. "] | No linked Discord account" }
+		return { DryRunPrefix .. Entry.DisplayName .. " (@" .. Entry.Username .. ") [" .. Entry.UserId .. "] | No linked Discord account" }
 	end
 
 	local Results = {}
 	for _, DiscordId in next, DiscordIds do
-		local UserPrefix = Entry.DisplayName .. " (@" .. Entry.Username .. ") [" .. Entry.UserId .. "]"
+		local UserPrefix = DryRunPrefix .. Entry.DisplayName .. " (@" .. Entry.Username .. ") [" .. Entry.UserId .. "]"
 		local Member = Guild:getMember(DiscordId)
 		if not Member then
 			table.insert(Results, UserPrefix .. " | <@" .. DiscordId .. "> | Not in server")
 		elseif Action == "add" then
 			if Member:hasRole(DISCORD_FASTE_ROLE_ID) then
 				table.insert(Results, UserPrefix .. " | <@" .. DiscordId .. "> | Already has role")
+			elseif DryRun then
+				table.insert(Results, UserPrefix .. " | <@" .. DiscordId .. "> | Would add faste role")
 			else
 				local Success, RoleErr = Member:addRole(DISCORD_FASTE_ROLE_ID)
 				if Success then
@@ -132,6 +137,8 @@ local function ProcessDiscordRole(Guild, Entry, Action)
 		elseif Action == "remove" then
 			if not Member:hasRole(DISCORD_FASTE_ROLE_ID) then
 				table.insert(Results, UserPrefix .. " | <@" .. DiscordId .. "> | Doesn't have role")
+			elseif DryRun then
+				table.insert(Results, UserPrefix .. " | <@" .. DiscordId .. "> | Would remove faste role")
 			else
 				local Success, RoleErr = Member:removeRole(DISCORD_FASTE_ROLE_ID)
 				if Success then
@@ -157,7 +164,7 @@ local function Callback(Interaction, Command, Args)
 	local Members = StrafesNET.GetAllGroupRoleMembers(GROUP_ID, RoleSetId)
 
 	if #Members == 0 then
-		return Interaction:reply("No members found with the faste role.")
+		return Interaction:reply("No members found with the faste role. (RoleSetId: " .. tostring(RoleSetId) .. ")")
 	end
 
 	local EligibleCount = 0
@@ -331,18 +338,26 @@ local function Callback(Interaction, Command, Args)
 		end
 	end
 
-	-- Cleanup: Roblox + Discord role management (when cleanup = true)
-	if Args.cleanup then
+	-- Cleanup: Roblox + Discord role management (when cleanup or dryrun = true)
+	local DryRun = Args.dryrun
+	if Args.cleanup or DryRun then
+		local DryRunPrefix = DryRun and "[DRY RUN] " or ""
+
 		-- Roblox demotions (ineligible users)
 		local RobloxChangeLines = {}
 		if MemberRoleId then
 			for _, Entry in next, IneligibleLines do
-				local Ok, Headers = pcall(StrafesNET.UpdateGroupMemberRole, GROUP_ID, Entry.UserId, tostring(MemberRoleId))
-				if Ok and Headers and tonumber(Headers.code) and tonumber(Headers.code) < 400 then
-					table.insert(RobloxChangeLines, Entry.DisplayName .. " (@" .. Entry.Username .. ") [" .. Entry.UserId .. "] | Demoted to Member")
+				local UserPrefix = Entry.DisplayName .. " (@" .. Entry.Username .. ") [" .. Entry.UserId .. "]"
+				if DryRun then
+					table.insert(RobloxChangeLines, DryRunPrefix .. UserPrefix .. " | Would demote to Member")
 				else
-					local ErrMsg = Ok and ("HTTP " .. tostring(Headers.code)) or tostring(Headers)
-					table.insert(RobloxChangeLines, Entry.DisplayName .. " (@" .. Entry.Username .. ") [" .. Entry.UserId .. "] | Demotion failed: " .. ErrMsg)
+					local Ok, Headers = pcall(StrafesNET.UpdateGroupMemberRole, GROUP_ID, Entry.UserId, tostring(MemberRoleId))
+					if Ok and Headers and tonumber(Headers.code) and tonumber(Headers.code) < 400 then
+						table.insert(RobloxChangeLines, UserPrefix .. " | Demoted to Member")
+					else
+						local ErrMsg = Ok and ("HTTP " .. tostring(Headers.code)) or tostring(Headers)
+						table.insert(RobloxChangeLines, UserPrefix .. " | Demotion failed: " .. ErrMsg)
+					end
 				end
 			end
 		end
@@ -350,18 +365,23 @@ local function Callback(Interaction, Command, Args)
 		-- Roblox promotions (eligible discovered candidates in group with lower role)
 		if not DiscoveryFailed then
 			for _, Entry in next, DiscoveryLines do
-				local Ok, Headers = pcall(StrafesNET.UpdateGroupMemberRole, GROUP_ID, Entry.UserId, tostring(RoleSetId))
-				if Ok and Headers and tonumber(Headers.code) and tonumber(Headers.code) < 400 then
-					table.insert(RobloxChangeLines, Entry.DisplayName .. " (@" .. Entry.Username .. ") [" .. Entry.UserId .. "] | Promoted to Faste")
+				local UserPrefix = Entry.DisplayName .. " (@" .. Entry.Username .. ") [" .. Entry.UserId .. "]"
+				if DryRun then
+					table.insert(RobloxChangeLines, DryRunPrefix .. UserPrefix .. " | Would promote to Faste")
 				else
-					local ErrMsg = Ok and ("HTTP " .. tostring(Headers.code)) or tostring(Headers)
-					table.insert(RobloxChangeLines, Entry.DisplayName .. " (@" .. Entry.Username .. ") [" .. Entry.UserId .. "] | Promotion failed: " .. ErrMsg)
+					local Ok, Headers = pcall(StrafesNET.UpdateGroupMemberRole, GROUP_ID, Entry.UserId, tostring(RoleSetId))
+					if Ok and Headers and tonumber(Headers.code) and tonumber(Headers.code) < 400 then
+						table.insert(RobloxChangeLines, UserPrefix .. " | Promoted to Faste")
+					else
+						local ErrMsg = Ok and ("HTTP " .. tostring(Headers.code)) or tostring(Headers)
+						table.insert(RobloxChangeLines, UserPrefix .. " | Promotion failed: " .. ErrMsg)
+					end
 				end
 			end
 		end
 
 		if #RobloxChangeLines > 0 then
-			FinalText = FinalText .. "--- ROBLOX ROLE CHANGES ---\n"
+			FinalText = FinalText .. "--- ROBLOX ROLE CHANGES" .. (DryRun and " (DRY RUN)" or "") .. " ---\n"
 			for _, Line in next, RobloxChangeLines do
 				FinalText = FinalText .. Line .. "\n"
 			end
@@ -375,7 +395,7 @@ local function Callback(Interaction, Command, Args)
 		if Guild then
 			-- Remove Discord role from ineligible users
 			for _, Entry in next, IneligibleLines do
-				for _, Line in next, ProcessDiscordRole(Guild, Entry, "remove") do
+				for _, Line in next, ProcessDiscordRole(Guild, Entry, "remove", DryRun) do
 					table.insert(DiscordChangeLines, Line)
 				end
 			end
@@ -383,7 +403,7 @@ local function Callback(Interaction, Command, Args)
 			-- Add Discord role to promoted discovery candidates
 			if not DiscoveryFailed then
 				for _, Entry in next, DiscoveryLines do
-					for _, Line in next, ProcessDiscordRole(Guild, Entry, "add") do
+					for _, Line in next, ProcessDiscordRole(Guild, Entry, "add", DryRun) do
 						table.insert(DiscordChangeLines, Line)
 					end
 				end
@@ -391,7 +411,7 @@ local function Callback(Interaction, Command, Args)
 
 			-- Ensure existing eligible members have Discord role
 			for _, Entry in next, EligibleLines do
-				for _, Line in next, ProcessDiscordRole(Guild, Entry, "add") do
+				for _, Line in next, ProcessDiscordRole(Guild, Entry, "add", DryRun) do
 					table.insert(DiscordChangeLines, Line)
 				end
 			end
@@ -400,7 +420,7 @@ local function Callback(Interaction, Command, Args)
 		end
 
 		if #DiscordChangeLines > 0 then
-			FinalText = FinalText .. "--- DISCORD ROLE CHANGES ---\n"
+			FinalText = FinalText .. "--- DISCORD ROLE CHANGES" .. (DryRun and " (DRY RUN)" or "") .. " ---\n"
 			for _, Line in next, DiscordChangeLines do
 				FinalText = FinalText .. Line .. "\n"
 			end
