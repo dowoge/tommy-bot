@@ -462,7 +462,14 @@ function StrafesNET.GetDiscordIdFromRobloxId(ROBLOX_ID)
     if tonumber(headers.code) ~= 200 then
         return nil
     end
-    return tostring(body.result.discordId)
+    if not body.result or not body.result.discordIds then
+        return nil
+    end
+    local Ids = {}
+    for _, Id in next, body.result.discordIds do
+        table.insert(Ids, tostring(Id))
+    end
+    return Ids
 end
 
 function StrafesNET.GetUserOnlineStatus(USER_ID)

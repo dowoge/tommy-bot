@@ -107,37 +107,42 @@ local function FormatEntry(Entry)
 end
 
 local function ProcessDiscordRole(Guild, Entry, Action)
-	local Ok, DiscordId = pcall(StrafesNET.GetDiscordIdFromRobloxId, Entry.UserId)
-	if not Ok then DiscordId = nil end
-	local UserPrefix = Entry.DisplayName .. " (@" .. Entry.Username .. ") [" .. Entry.UserId .. "]"
-	if not DiscordId then
-		return UserPrefix .. " | No linked Discord account"
+	local Ok, DiscordIds = pcall(StrafesNET.GetDiscordIdFromRobloxId, Entry.UserId)
+	if not Ok or not DiscordIds or #DiscordIds == 0 then
+		return { Entry.DisplayName .. " (@" .. Entry.Username .. ") [" .. Entry.UserId .. "] | No linked Discord account" }
 	end
 
-	local Member = Guild:getMember(DiscordId)
-	if not Member then
-		return UserPrefix .. " | <@" .. DiscordId .. "> | Not in server"
+	local Results = {}
+	for _, DiscordId in next, DiscordIds do
+		local UserPrefix = Entry.DisplayName .. " (@" .. Entry.Username .. ") [" .. Entry.UserId .. "]"
+		local Member = Guild:getMember(DiscordId)
+		if not Member then
+			table.insert(Results, UserPrefix .. " | <@" .. DiscordId .. "> | Not in server")
+		elseif Action == "add" then
+			if Member:hasRole(DISCORD_FASTE_ROLE_ID) then
+				table.insert(Results, UserPrefix .. " | <@" .. DiscordId .. "> | Already has role")
+			else
+				local Success, RoleErr = Member:addRole(DISCORD_FASTE_ROLE_ID)
+				if Success then
+					table.insert(Results, UserPrefix .. " | <@" .. DiscordId .. "> | Added faste role")
+				else
+					table.insert(Results, UserPrefix .. " | <@" .. DiscordId .. "> | Add failed: " .. tostring(RoleErr))
+				end
+			end
+		elseif Action == "remove" then
+			if not Member:hasRole(DISCORD_FASTE_ROLE_ID) then
+				table.insert(Results, UserPrefix .. " | <@" .. DiscordId .. "> | Doesn't have role")
+			else
+				local Success, RoleErr = Member:removeRole(DISCORD_FASTE_ROLE_ID)
+				if Success then
+					table.insert(Results, UserPrefix .. " | <@" .. DiscordId .. "> | Removed faste role")
+				else
+					table.insert(Results, UserPrefix .. " | <@" .. DiscordId .. "> | Remove failed: " .. tostring(RoleErr))
+				end
+			end
+		end
 	end
-
-	if Action == "add" then
-		if Member:hasRole(DISCORD_FASTE_ROLE_ID) then
-			return UserPrefix .. " | <@" .. DiscordId .. "> | Already has role"
-		end
-		local Success, RoleErr = Member:addRole(DISCORD_FASTE_ROLE_ID)
-		if Success then
-			return UserPrefix .. " | <@" .. DiscordId .. "> | Added faste role"
-		end
-		return UserPrefix .. " | <@" .. DiscordId .. "> | Add failed: " .. tostring(RoleErr)
-	elseif Action == "remove" then
-		if not Member:hasRole(DISCORD_FASTE_ROLE_ID) then
-			return UserPrefix .. " | <@" .. DiscordId .. "> | Doesn't have role"
-		end
-		local Success, RoleErr = Member:removeRole(DISCORD_FASTE_ROLE_ID)
-		if Success then
-			return UserPrefix .. " | <@" .. DiscordId .. "> | Removed faste role"
-		end
-		return UserPrefix .. " | <@" .. DiscordId .. "> | Remove failed: " .. tostring(RoleErr)
-	end
+	return Results
 end
 
 local function Callback(Interaction, Command, Args)
@@ -370,19 +375,25 @@ local function Callback(Interaction, Command, Args)
 		if Guild then
 			-- Remove Discord role from ineligible users
 			for _, Entry in next, IneligibleLines do
-				table.insert(DiscordChangeLines, ProcessDiscordRole(Guild, Entry, "remove"))
+				for _, Line in next, ProcessDiscordRole(Guild, Entry, "remove") do
+					table.insert(DiscordChangeLines, Line)
+				end
 			end
 
 			-- Add Discord role to promoted discovery candidates
 			if not DiscoveryFailed then
 				for _, Entry in next, DiscoveryLines do
-					table.insert(DiscordChangeLines, ProcessDiscordRole(Guild, Entry, "add"))
+					for _, Line in next, ProcessDiscordRole(Guild, Entry, "add") do
+						table.insert(DiscordChangeLines, Line)
+					end
 				end
 			end
 
 			-- Ensure existing eligible members have Discord role
 			for _, Entry in next, EligibleLines do
-				table.insert(DiscordChangeLines, ProcessDiscordRole(Guild, Entry, "add"))
+				for _, Line in next, ProcessDiscordRole(Guild, Entry, "add") do
+					table.insert(DiscordChangeLines, Line)
+				end
 			end
 		else
 			table.insert(DiscordChangeLines, "Could not find bhop Discord server")
