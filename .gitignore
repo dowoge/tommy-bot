@@ -3,6 +3,7 @@ gateway.json
 APIKeys.lua
 Token.lua
 RankConstants.lua
+ProxyConfig.lua
 deps
 sensdb.lua
 *.json

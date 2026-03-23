@@ -20,6 +20,31 @@ local RateLimitState = {
     Custom = {}
 }
 
+local ProxyConfig = nil
+local ProxyConfigLoaded = false
+
+local function GetProxyConfig()
+    if not ProxyConfigLoaded then
+        ProxyConfigLoaded = true
+        local Success, Config = pcall(require, "./ProxyConfig.lua")
+        if Success and type(Config) == "table" and Config.WorkerUrl and Config.ProxyKey then
+            ProxyConfig = Config
+            print("[HTTP] Proxy enabled: " .. Config.WorkerUrl)
+        end
+    end
+    return ProxyConfig
+end
+
+local ProxiedDomains = {
+    ["users.roblox.com"] = true,
+    ["badges.roblox.com"] = true,
+    ["presence.roblox.com"] = true,
+    ["thumbnails.roblox.com"] = true,
+    ["inventory.roblox.com"] = true,
+    ["groups.roblox.com"] = true,
+    ["apis.roblox.com"] = true,
+}
+
 local function PruneCache()
     local NowTime = os.time()
     for Key, Entry in next, CacheStore do
@@ -740,6 +765,16 @@ local function Request(Method, Url, Params, RequestHeaders, RequestBody, Callbac
         local Delay = 2
         local Domain = GetHostFromUrl(RequestUrl)
 
+        -- Proxy rewriting for Roblox domains
+        local ActualUrl = RequestUrl
+        local Config = GetProxyConfig()
+        if Config and Domain and ProxiedDomains[Domain] then
+            ActualUrl = RequestUrl:gsub("^https://[^/]+", Config.WorkerUrl, 1)
+            MutableHeaders["X-Proxy-Key"] = Config.ProxyKey
+            MutableHeaders["X-Target-Host"] = Domain
+            FormattedHeaders = CreateHeaders(MutableHeaders)
+        end
+
         local UseCache = CanUseCache(Method, Options, MutableHeaders)
         local CacheKey = nil
         local CachedHeaders, CachedBody = nil, nil
@@ -761,7 +796,7 @@ local function Request(Method, Url, Params, RequestHeaders, RequestBody, Callbac
 
         while Attempt <= MaxRetries do
             EnforceRateLimit(Domain, Options)
-            local Headers, Body = HTTPRequest(Method, RequestUrl, FormattedHeaders, RequestBody)
+            local Headers, Body = HTTPRequest(Method, ActualUrl, FormattedHeaders, RequestBody)
             NormalizeHeaders(Headers)
             print("Attempt:", Attempt + 1, "Status code:", Headers.code)
 
@@ -820,7 +855,7 @@ local function Request(Method, Url, Params, RequestHeaders, RequestBody, Callbac
             end
         end
 
-        local Headers, Body = HTTPRequest(Method, RequestUrl, FormattedHeaders, RequestBody)
+        local Headers, Body = HTTPRequest(Method, ActualUrl, FormattedHeaders, RequestBody)
         NormalizeHeaders(Headers)
         local ResponseCode = tonumber(Headers.code)
         local DecodedBody = TryDecodeJson(Body)

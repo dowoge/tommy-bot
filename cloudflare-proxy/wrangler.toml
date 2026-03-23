@@ -1,0 +1,7 @@
+name = "roblox-proxy"
+main = "src/index.js"
+compatibility_date = "2024-01-01"
+
+[[routes]]
+pattern = "roblox-proxy.tommyy.dev"
+custom_domain = true
