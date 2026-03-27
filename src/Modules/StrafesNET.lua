@@ -91,7 +91,7 @@ local ROBLOX_GROUPS_ROLES_URL = 'https://groups.roblox.com/v2/users/%s/groups/ro
 local ROBLOX_GROUPS_API_URL = 'https://groups.roblox.com/v1/groups/'
 local ROBLOX_OPEN_CLOUD_URL = 'https://apis.roblox.com/cloud/v2/'
 
-ROBLOX_THUMBNAIL_SIZES = {
+local ROBLOX_THUMBNAIL_SIZES = {
     [48] = '48x48',
     [50] = '50x50',
     [60] = '60x60',
@@ -104,7 +104,7 @@ ROBLOX_THUMBNAIL_SIZES = {
     [420] = '420x420',
     [720] = '720x720'
 }
-ROBLOX_THUMBNAIL_TYPES = {
+local ROBLOX_THUMBNAIL_TYPES = {
     AVATAR = 'avatar',
     BUST = 'avatar-bust',
     HEADSHOT = 'avatar-headshot'
@@ -433,92 +433,92 @@ function StrafesNET.GetAllMaps()
     return StrafesNET.Maps
 end
 
-function StrafesNET.GetRobloxInfoFromUserId(USER_ID)
-    return Request("GET", ROBLOX_API_URL .. "users/" .. USER_ID, {CacheTTL = 60 * 60 * 12})
+function StrafesNET.GetRobloxInfoFromUserId(UserId)
+    return Request("GET", ROBLOX_API_URL .. "users/" .. UserId, {CacheTTL = 60 * 60 * 12})
 end
 
-function StrafesNET.GetRobloxInfoFromUsername(USERNAME)
-    local headers, body = Request("POST", ROBLOX_API_URL .. "usernames/users", nil, { ["Content-Type"] = "application/json" }, { usernames = { USERNAME } }, {CacheTTL = 60 * 60 * 12})
-    if not body or not body.data or not body.data[1] then
-        return error("User from username \"" .. USERNAME .. "\" not found")
+function StrafesNET.GetRobloxInfoFromUsername(Username)
+    local Headers, Body = Request("POST", ROBLOX_API_URL .. "usernames/users", nil, { ["Content-Type"] = "application/json" }, { usernames = { Username } }, {CacheTTL = 60 * 60 * 12})
+    if not Body or not Body.data or not Body.data[1] then
+        return error("User from username \"" .. Username .. "\" not found")
     end
 
-    return StrafesNET.GetRobloxInfoFromUserId(body.data[1].id)
+    return StrafesNET.GetRobloxInfoFromUserId(Body.data[1].id)
 end
 
-function StrafesNET.GetRobloxInfoFromDiscordId(DISCORD_ID)
-    local headers, body = Request("GET", FIVEMAN_API_URL .. "users/" .. DISCORD_ID, {CacheTTL = 60 * 60 * 24 * 7, MaxRetries = 0})
-    if tonumber(headers.code) ~= 200 then
-        return headers, body
+function StrafesNET.GetRobloxInfoFromDiscordId(DiscordId)
+    local Headers, Body = Request("GET", FIVEMAN_API_URL .. "users/" .. DiscordId, {CacheTTL = 60 * 60 * 24 * 7, MaxRetries = 0})
+    if tonumber(Headers.code) ~= 200 then
+        return Headers, Body
     end
 
-    return StrafesNET.GetRobloxInfoFromUserId(body.result.robloxId)
+    return StrafesNET.GetRobloxInfoFromUserId(Body.result.robloxId)
 end
 
-function StrafesNET.GetDiscordIdFromRobloxId(ROBLOX_ID)
-    local headers, body = Request("GET", FIVEMAN_API_URL .. "users/from_roblox/" .. ROBLOX_ID,
+function StrafesNET.GetDiscordIdFromRobloxId(RobloxId)
+    local Headers, Body = Request("GET", FIVEMAN_API_URL .. "users/from_roblox/" .. RobloxId,
         nil, { ["api-key"] = APIKeys.Fiveman },
         {CacheTTL = 60 * 60 * 24 * 7, MaxRetries = 0})
-    if tonumber(headers.code) ~= 200 then
+    if tonumber(Headers.code) ~= 200 then
         return nil
     end
-    if not body.result or not body.result.discordIds then
+    if not Body.result or not Body.result.discordIds then
         return nil
     end
     local Ids = {}
-    for _, Id in next, body.result.discordIds do
+    for _, Id in next, Body.result.discordIds do
         table.insert(Ids, tostring(Id))
     end
     return Ids
 end
 
-function StrafesNET.GetUserOnlineStatus(USER_ID)
-    if not USER_ID then return 'empty id' end
+function StrafesNET.GetUserOnlineStatus(UserId)
+    if not UserId then return 'empty id' end
 
-    local presence = Request("POST", ROBLOX_PRESENCE_URL .. "presence/users", { userIds = { USER_ID } }).userPresences
+    local Presence = Request("POST", ROBLOX_PRESENCE_URL .. "presence/users", { userIds = { UserId } }).userPresences
         [1]
 
-    local last_online = Request("POST", ROBLOX_PRESENCE_URL .. "presence/last-online", { userIds = { USER_ID } })
+    local LastOnline = Request("POST", ROBLOX_PRESENCE_URL .. "presence/last-online", { userIds = { UserId } })
         .lastOnlineTimestamps[1]
 
-    L1Copy(last_online, presence)
-    return presence
+    L1Copy(LastOnline, Presence)
+    return Presence
 end
 
-function StrafesNET.GetUserUsernameHistory(USER_ID)
-    if not USER_ID then return 'empty id' end
-    return Request("GET", ROBLOX_API_URL .. "users/" .. USER_ID .. "/username-history",
+function StrafesNET.GetUserUsernameHistory(UserId)
+    if not UserId then return 'empty id' end
+    return Request("GET", ROBLOX_API_URL .. "users/" .. UserId .. "/username-history",
         { limit = 50, sortOrder = 'Desc' }, {CacheTTL = 60 * 60 * 24})
 end
 
-function StrafesNET.GetBadgesAwardedDates(USER_ID, BADGE_LIST)
-    if not USER_ID then return 'empty id' end
-    return Request("GET", ROBLOX_BADGES_API .. "users/" .. USER_ID .. "/badges/awarded-dates",
-        { badgeIds = table.concat(BADGE_LIST, ",") }, {CacheTTL = 60 * 60 * 24 * 365})
+function StrafesNET.GetBadgesAwardedDates(UserId, BadgeList)
+    if not UserId then return 'empty id' end
+    return Request("GET", ROBLOX_BADGES_API .. "users/" .. UserId .. "/badges/awarded-dates",
+        { badgeIds = table.concat(BadgeList, ",") }, {CacheTTL = 60 * 60 * 24 * 365})
 end
 
-function StrafesNET.GetVerificationItemID(USER_ID)
-    if not USER_ID then return 'empty id' end
+function StrafesNET.GetVerificationItemId(UserId)
+    if not UserId then return 'empty id' end
 
-    local headers1, body1 = Request("GET", ROBLOX_INVENTORY_API .. "users/" .. USER_ID .. "/items/Asset/102611803", {CacheTTL = 60 * 60 * 24 * 7, MaxRetries = 0})
+    local Headers1, Body1 = Request("GET", ROBLOX_INVENTORY_API .. "users/" .. UserId .. "/items/Asset/102611803", {CacheTTL = 60 * 60 * 24 * 7, MaxRetries = 0})
 
-    local headers2, body2 = Request("GET", ROBLOX_INVENTORY_API .. "users/" .. USER_ID .. "/items/Asset/1567446", {CacheTTL = 60 * 60 * 24 * 7, MaxRetries = 0})
+    local Headers2, Body2 = Request("GET", ROBLOX_INVENTORY_API .. "users/" .. UserId .. "/items/Asset/1567446", {CacheTTL = 60 * 60 * 24 * 7, MaxRetries = 0})
 
-    local data = {}
-    if body2.data and body2.data[1] then data[#data + 1] = body2.data[1] end
-    if body1.data and body1.data[1] then data[#data + 1] = body1.data[1] end
+    local Data = {}
+    if Body2.data and Body2.data[1] then Data[#Data + 1] = Body2.data[1] end
+    if Body1.data and Body1.data[1] then Data[#Data + 1] = Body1.data[1] end
 
-    return { data = data }
+    return { data = Data }
 end
 
-function StrafesNET.GetUserThumbnail(USER_ID, TYPE, SIZE)
-    if not USER_ID then return 'empty id' end
+function StrafesNET.GetUserThumbnail(UserId, ThumbnailType, ThumbnailSize)
+    if not UserId then return 'empty id' end
 
-    local _TYPE = ROBLOX_THUMBNAIL_TYPES[TYPE] or "avatar"
-    local _SIZE = ROBLOX_THUMBNAIL_SIZES[SIZE] or "180x180"
+    local ResolvedType = ROBLOX_THUMBNAIL_TYPES[ThumbnailType] or "avatar"
+    local ResolvedSize = ROBLOX_THUMBNAIL_SIZES[ThumbnailSize] or "180x180"
 
-    return Request("GET", ROBLOX_THUMBNAIL_URL .. "users/" .. _TYPE,
-        { userIds = USER_ID, size = _SIZE, format = "Png", isCircular = false }, {CacheTTL = 60 * 60 * 4})
+    return Request("GET", ROBLOX_THUMBNAIL_URL .. "users/" .. ResolvedType,
+        { userIds = UserId, size = ResolvedSize, format = "Png", isCircular = false }, {CacheTTL = 60 * 60 * 4})
 end
 
 function StrafesNET.GetGroupRoles(GroupId)
