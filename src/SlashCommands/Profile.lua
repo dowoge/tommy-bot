@@ -146,35 +146,17 @@ local function Callback(Interaction, Command, Args)
 		CompletionCount = ReleasedCompletions .. '/' .. TotalReleasedMaps
 	end
 
-	-- WR count (paginate through all pages)
+	-- WR count (fetch all WRs for the game, filter by style)
 	local WRCount = 'N/A'
-	local WRTotal = 0
-	local WRPage = 0
-	local WRFetched = false
-	local WRDone = false
-	while not WRDone do
-		local WRHeaders, WRResponse = StrafesNET.GetWorldRecords(Id, nil, GameId, 0, StyleId, 100, WRPage)
-		if tonumber(WRHeaders.code) < 400 and WRResponse then
-			WRFetched = true
-			if WRResponse.pagination and WRResponse.pagination.total_items then
-				WRTotal = WRResponse.pagination.total_items
-				WRDone = true
-			elseif WRResponse.data then
-				WRTotal = WRTotal + #WRResponse.data
-				if #WRResponse.data < 100 then
-					WRDone = true
-				else
-					WRPage = WRPage + 1
-				end
-			else
-				WRDone = true
+	local Records, WRErr = StrafesNET.GetAllUserWorldRecords(Id, GameId, 0)
+	if Records then
+		local Count = 0
+		for _, Record in next, Records do
+			if Record.style_id == StyleId then
+				Count = Count + 1
 			end
-		else
-			WRDone = true
 		end
-	end
-	if WRFetched then
-		WRCount = tostring(WRTotal)
+		WRCount = tostring(Count)
 	end
 
 	local Embed = {
