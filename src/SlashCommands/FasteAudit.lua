@@ -99,11 +99,30 @@ local function CheckEligibility(GameStyleCounts)
 	return false, nil
 end
 
+local function FormatWRCounts(GameStyleCounts)
+	if not GameStyleCounts then return "" end
+	local Parts = {}
+	for GameId, StyleCounts in next, GameStyleCounts do
+		local GameName = StrafesNET.GameIdsString[GameId] or ("Game " .. GameId)
+		for StyleId, Count in next, StyleCounts do
+			local StyleName = StrafesNET.StylesString[StyleId] or ("Style " .. StyleId)
+			Parts[#Parts + 1] = GameName .. " " .. StyleName .. ": " .. Count
+		end
+	end
+	table.sort(Parts)
+	return table.concat(Parts, ", ")
+end
+
 local function FormatEntry(Entry)
 	local UserString = Entry.DisplayName .. " (@" .. Entry.Username .. ")"
 	local Status = Entry.IsEligible and "ELIGIBLE" or "NOT ELIGIBLE"
 	if Entry.IsEligible and Entry.EligibilityReason then
 		Status = Status .. " (" .. Entry.EligibilityReason .. ")"
+	elseif not Entry.IsEligible and Entry.GameStyleCounts then
+		local CountSummary = FormatWRCounts(Entry.GameStyleCounts)
+		if #CountSummary > 0 then
+			Status = Status .. " (" .. CountSummary .. ")"
+		end
 	end
 	return Pad(UserString, 46) .. " | " .. Status .. "\n"
 end
@@ -186,7 +205,7 @@ local function Callback(Interaction, Command, Args)
 			table.insert(ErrorLines, {Username = Username, DisplayName = DisplayName, UserId = UserId, Error = ErrorMsg})
 		else
 			local IsEligible, EligibilityReason = CheckEligibility(GameStyleCounts)
-			local Entry = {Username = Username, DisplayName = DisplayName, UserId = UserId, IsEligible = IsEligible, EligibilityReason = EligibilityReason}
+			local Entry = {Username = Username, DisplayName = DisplayName, UserId = UserId, IsEligible = IsEligible, EligibilityReason = EligibilityReason, GameStyleCounts = GameStyleCounts}
 
 			if IsEligible then
 				EligibleCount = EligibleCount + 1

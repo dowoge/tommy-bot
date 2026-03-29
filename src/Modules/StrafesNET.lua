@@ -260,7 +260,7 @@ function StrafesNET.GetWorldRecords(UserId, MapId, GameId, ModeId, StyleId, Page
         mode_id = ModeId,
         style_id = StyleId,
         page_size = PageSize or 10,
-        page_number = PageNumber or 0
+        page_number = PageNumber or 1
     }
     return Request("GET", RequestUrl, Params, RequestHeaders, {CacheTTL = 60 * 10})
 end
