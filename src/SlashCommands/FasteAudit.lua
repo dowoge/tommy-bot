@@ -142,7 +142,7 @@ local function ProcessDiscordRole(Guild, Entry, Action, DryRun)
 			table.insert(Results, UserPrefix .. " | <@" .. DiscordId .. "> | Not in server")
 		elseif Action == "add" then
 			if Member:hasRole(DISCORD_FASTE_ROLE_ID) then
-				table.insert(Results, UserPrefix .. " | <@" .. DiscordId .. "> | Already has role")
+				-- Skip, already has role
 			elseif DryRun then
 				table.insert(Results, UserPrefix .. " | <@" .. DiscordId .. "> | Would add faste role")
 			else
@@ -155,7 +155,7 @@ local function ProcessDiscordRole(Guild, Entry, Action, DryRun)
 			end
 		elseif Action == "remove" then
 			if not Member:hasRole(DISCORD_FASTE_ROLE_ID) then
-				table.insert(Results, UserPrefix .. " | <@" .. DiscordId .. "> | Doesn't have role")
+				-- Skip, doesn't have role
 			elseif DryRun then
 				table.insert(Results, UserPrefix .. " | <@" .. DiscordId .. "> | Would remove faste role")
 			else
@@ -171,19 +171,12 @@ local function ProcessDiscordRole(Guild, Entry, Action, DryRun)
 	return Results
 end
 
-local function Callback(Interaction, Command, Args)
-	if Interaction.user.id ~= ALLOWED_USER_ID then
-		return Interaction:reply("You do not have permission to use this command.", true)
-	end
-
-	Interaction:replyDeferred()
-	Args = Args or {}
-
+local function RunAudit(Guild, Cleanup, DryRun)
 	local RoleSetId, FasteRoleRank, MemberRoleId = GetFasteRoleId()
 	local Members = StrafesNET.GetAllGroupRoleMembers(GROUP_ID, RoleSetId)
 
 	if #Members == 0 then
-		return Interaction:reply("No members found with the faste role. (RoleSetId: " .. tostring(RoleSetId) .. ")")
+		error("No members found with the faste role. (RoleSetId: " .. tostring(RoleSetId) .. ")")
 	end
 
 	local EligibleCount = 0
@@ -358,8 +351,7 @@ local function Callback(Interaction, Command, Args)
 	end
 
 	-- Cleanup: Roblox + Discord role management (when cleanup or dryrun = true)
-	local DryRun = Args.dryrun
-	if Args.cleanup or DryRun then
+	if Cleanup or DryRun then
 		local DryRunPrefix = DryRun and "[DRY RUN] " or ""
 
 		-- Roblox demotions (ineligible users)
@@ -408,7 +400,6 @@ local function Callback(Interaction, Command, Args)
 		end
 
 		-- Discord role management
-		local Guild = Interaction.client:getGuild(BHOP_SERVER_ID)
 		local DiscordChangeLines = {}
 
 		if Guild then
@@ -447,17 +438,33 @@ local function Callback(Interaction, Command, Args)
 		end
 	end
 
-	local FileName = "./fasteaudit-output.txt"
+	local FileName = "./fasteaudit-output-" .. os.time() .. ".txt"
 	local FileHandle = io.open(FileName, "w+")
 	FileHandle:write(FinalText)
 	FileHandle:close()
 
-	Interaction:reply({ file = FileName })
+	return FileName
+end
 
+local function Callback(Interaction, Command, Args)
+	if Interaction.user.id ~= ALLOWED_USER_ID then
+		return Interaction:reply("You do not have permission to use this command.", true)
+	end
+
+	Interaction:replyDeferred()
+	Args = Args or {}
+
+	local Guild = Interaction.client:getGuild(BHOP_SERVER_ID)
+	local FileName = RunAudit(Guild, Args.cleanup, Args.dryrun)
+
+	Interaction:reply({ file = FileName })
 	os.remove(FileName)
 end
 
 return {
 	Command = FasteAuditCommand,
-	Callback = Callback
+	Callback = Callback,
+	RunAudit = RunAudit,
+	BHOP_SERVER_ID = BHOP_SERVER_ID,
+	ALLOWED_USER_ID = ALLOWED_USER_ID,
 }
