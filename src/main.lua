@@ -29,9 +29,9 @@ Client:on('ready', function()
                 local Guild = Client:getGuild(FasteAudit.BHOP_SERVER_ID)
                 local FileName = FasteAudit.RunAudit(Guild, true, false)
 
-                local User = Client:getUser(FasteAudit.ALLOWED_USER_ID)
-                if User then
-                    User:send({ content = "Daily faste audit results:", file = FileName })
+                local Channel = Client:getChannel(FasteAudit.AUDIT_LOG_CHANNEL_ID)
+                if Channel then
+                    Channel:send({ file = FileName })
                 end
 
                 os.remove(FileName)
@@ -40,9 +40,9 @@ Client:on('ready', function()
             if not Success then
                 print("[Scheduled Audit] Error: " .. tostring(Error))
                 pcall(function()
-                    local User = Client:getUser(FasteAudit.ALLOWED_USER_ID)
-                    if User then
-                        User:send("Scheduled faste audit failed: " .. tostring(Error))
+                    local Channel = Client:getChannel(FasteAudit.AUDIT_LOG_CHANNEL_ID)
+                    if Channel then
+                        Channel:send("Scheduled faste audit failed: " .. tostring(Error))
                     end
                 end)
             end
