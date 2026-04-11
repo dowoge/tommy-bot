@@ -128,48 +128,108 @@ local function FormatEntry(Entry)
 	return Pad(UserString, 46) .. " | " .. Status .. "\n"
 end
 
-local function ProcessDiscordRole(Guild, Entry, Action, DryRun)
-	local DryRunPrefix = DryRun and "[DRY RUN] " or ""
+local OUTCOME_LABELS = {
+	Added = "Added faste role",
+	Removed = "Removed faste role",
+	AlreadyHad = "Already had role",
+	AlreadyLacks = "Already lacked role",
+	WouldAdd = "Would add faste role",
+	WouldRemove = "Would remove faste role",
+}
+
+local function ApplyRoleChange(Member, Method, FailLabel)
+	local Ok, Success, RoleErr = pcall(Member[Method], Member, DISCORD_FASTE_ROLE_ID)
+	if not Ok then
+		return false, FailLabel .. ": " .. tostring(Success)
+	end
+	if Success then
+		return true
+	end
+	return false, FailLabel .. ": " .. tostring(RoleErr)
+end
+
+local function SyncDiscordRole(Guild, Entry, Action, DryRun)
+	local Result = {
+		UserPrefix = Entry.DisplayName .. " (@" .. Entry.Username .. ") [" .. Entry.UserId .. "]",
+		Action = Action,
+		LinkLookupOk = true,
+		LinkedCount = 0,
+		InGuildAlts = {},
+	}
+
 	local Ok, DiscordIds = pcall(StrafesNET.GetDiscordIdFromRobloxId, Entry.UserId)
-	if not Ok or not DiscordIds or #DiscordIds == 0 then
-		return { DryRunPrefix .. Entry.DisplayName .. " (@" .. Entry.Username .. ") [" .. Entry.UserId .. "] | No linked Discord account" }
+	if not Ok or not DiscordIds then
+		Result.LinkLookupOk = false
+		return Result
 	end
 
-	local Results = {}
+	Result.LinkedCount = #DiscordIds
+
 	for _, DiscordId in next, DiscordIds do
-		local UserPrefix = DryRunPrefix .. Entry.DisplayName .. " (@" .. Entry.Username .. ") [" .. Entry.UserId .. "]"
 		local Member = Guild:getMember(DiscordId)
-		if not Member then
-			table.insert(Results, UserPrefix .. " | <@" .. DiscordId .. "> | Not in server")
-		elseif Action == "add" then
-			if Member:hasRole(DISCORD_FASTE_ROLE_ID) then
-				-- Skip, already has role
-			elseif DryRun then
-				table.insert(Results, UserPrefix .. " | <@" .. DiscordId .. "> | Would add faste role")
-			else
-				local Success, RoleErr = Member:addRole(DISCORD_FASTE_ROLE_ID)
-				if Success then
-					table.insert(Results, UserPrefix .. " | <@" .. DiscordId .. "> | Added faste role")
+		if Member then
+			local Alt = { DiscordId = DiscordId }
+			local HasRole = Member:hasRole(DISCORD_FASTE_ROLE_ID)
+			if Action == "add" then
+				if HasRole then
+					Alt.Outcome = "AlreadyHad"
+				elseif DryRun then
+					Alt.Outcome = "WouldAdd"
 				else
-					table.insert(Results, UserPrefix .. " | <@" .. DiscordId .. "> | Add failed: " .. tostring(RoleErr))
+					local Success, ErrMsg = ApplyRoleChange(Member, "addRole", "Add failed")
+					if Success then
+						Alt.Outcome = "Added"
+					else
+						Alt.Outcome = "Failed"
+						Alt.ErrorMsg = ErrMsg
+					end
+				end
+			elseif Action == "remove" then
+				if not HasRole then
+					Alt.Outcome = "AlreadyLacks"
+				elseif DryRun then
+					Alt.Outcome = "WouldRemove"
+				else
+					local Success, ErrMsg = ApplyRoleChange(Member, "removeRole", "Remove failed")
+					if Success then
+						Alt.Outcome = "Removed"
+					else
+						Alt.Outcome = "Failed"
+						Alt.ErrorMsg = ErrMsg
+					end
 				end
 			end
-		elseif Action == "remove" then
-			if not Member:hasRole(DISCORD_FASTE_ROLE_ID) then
-				-- Skip, doesn't have role
-			elseif DryRun then
-				table.insert(Results, UserPrefix .. " | <@" .. DiscordId .. "> | Would remove faste role")
-			else
-				local Success, RoleErr = Member:removeRole(DISCORD_FASTE_ROLE_ID)
-				if Success then
-					table.insert(Results, UserPrefix .. " | <@" .. DiscordId .. "> | Removed faste role")
-				else
-					table.insert(Results, UserPrefix .. " | <@" .. DiscordId .. "> | Remove failed: " .. tostring(RoleErr))
-				end
-			end
+			table.insert(Result.InGuildAlts, Alt)
 		end
 	end
-	return Results
+
+	return Result
+end
+
+local function FormatDiscordRoleResult(Result, DryRun)
+	local DryRunPrefix = DryRun and "[DRY RUN] " or ""
+
+	if not Result.LinkLookupOk or Result.LinkedCount == 0 then
+		return DryRunPrefix .. Result.UserPrefix .. " | No linked Discord accounts"
+	end
+
+	if #Result.InGuildAlts == 0 then
+		return DryRunPrefix .. Result.UserPrefix .. " | " .. Result.LinkedCount .. " linked, none in this server"
+	end
+
+	if #Result.InGuildAlts == 1 then
+		local Alt = Result.InGuildAlts[1]
+		if Alt.Outcome == "AlreadyHad" or Alt.Outcome == "AlreadyLacks" then
+			return nil
+		end
+	end
+
+	local Parts = { DryRunPrefix .. Result.UserPrefix }
+	for _, Alt in next, Result.InGuildAlts do
+		local Label = Alt.ErrorMsg or OUTCOME_LABELS[Alt.Outcome] or Alt.Outcome
+		Parts[#Parts + 1] = "<@" .. Alt.DiscordId .. "> " .. Label
+	end
+	return table.concat(Parts, " | ")
 end
 
 local function RunAudit(Guild, Cleanup, DryRun)
@@ -404,27 +464,58 @@ local function RunAudit(Guild, Cleanup, DryRun)
 		local DiscordChangeLines = {}
 
 		if Guild then
-			-- Remove Discord role from ineligible users
+			local SyncQueue = {}
 			for _, Entry in next, IneligibleLines do
-				for _, Line in next, ProcessDiscordRole(Guild, Entry, "remove", DryRun) do
-					table.insert(DiscordChangeLines, Line)
-				end
+				table.insert(SyncQueue, { Entry = Entry, Action = "remove" })
 			end
-
-			-- Add Discord role to promoted discovery candidates
 			if not DiscoveryFailed then
 				for _, Entry in next, DiscoveryLines do
-					for _, Line in next, ProcessDiscordRole(Guild, Entry, "add", DryRun) do
-						table.insert(DiscordChangeLines, Line)
+					table.insert(SyncQueue, { Entry = Entry, Action = "add" })
+				end
+			end
+			for _, Entry in next, EligibleLines do
+				table.insert(SyncQueue, { Entry = Entry, Action = "add" })
+			end
+
+			local Totals = {
+				UsersProcessed = 0, MultiAltUsers = 0, NoLinkUsers = 0, NoInGuildUsers = 0,
+				Added = 0, Removed = 0, WouldAdd = 0, WouldRemove = 0,
+				AlreadyHad = 0, AlreadyLacks = 0, Failed = 0,
+			}
+
+			local EntryLines = {}
+			for _, Item in next, SyncQueue do
+				local Result = SyncDiscordRole(Guild, Item.Entry, Item.Action, DryRun)
+
+				Totals.UsersProcessed = Totals.UsersProcessed + 1
+				if not Result.LinkLookupOk or Result.LinkedCount == 0 then
+					Totals.NoLinkUsers = Totals.NoLinkUsers + 1
+				elseif #Result.InGuildAlts == 0 then
+					Totals.NoInGuildUsers = Totals.NoInGuildUsers + 1
+				else
+					if #Result.InGuildAlts >= 2 then
+						Totals.MultiAltUsers = Totals.MultiAltUsers + 1
 					end
+					for _, Alt in next, Result.InGuildAlts do
+						Totals[Alt.Outcome] = (Totals[Alt.Outcome] or 0) + 1
+					end
+				end
+
+				local Line = FormatDiscordRoleResult(Result, DryRun)
+				if Line then
+					table.insert(EntryLines, Line)
 				end
 			end
 
-			-- Ensure existing eligible members have Discord role
-			for _, Entry in next, EligibleLines do
-				for _, Line in next, ProcessDiscordRole(Guild, Entry, "add", DryRun) do
-					table.insert(DiscordChangeLines, Line)
-				end
+			table.insert(DiscordChangeLines, string.format(
+				"Summary: %d users | %d multi-alt | +%d -%d (%d would-add %d would-remove) | %d failed | %d/%d already correct | %d no link | %d no in-guild alts",
+				Totals.UsersProcessed, Totals.MultiAltUsers,
+				Totals.Added, Totals.Removed, Totals.WouldAdd, Totals.WouldRemove,
+				Totals.Failed, Totals.AlreadyHad, Totals.AlreadyLacks,
+				Totals.NoLinkUsers, Totals.NoInGuildUsers
+			))
+			for _, Line in next, EntryLines do
+				table.insert(DiscordChangeLines, Line)
 			end
 		else
 			table.insert(DiscordChangeLines, "Could not find bhop Discord server")
