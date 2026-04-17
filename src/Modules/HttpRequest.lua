@@ -792,7 +792,8 @@ local function Request(Method, Url, Params, RequestHeaders, RequestBody, Callbac
         local ActualUrl = RequestUrl
         local Config = GetProxyConfig()
         if Config and Domain and ProxiedDomains[Domain] then
-            ActualUrl = RequestUrl:gsub("^https://[^/]+", Config.WorkerUrl, 1)
+            local PathAndQuery = RequestUrl:match("^https://[^/]+(.*)") or ""
+            ActualUrl = Config.WorkerUrl .. PathAndQuery
             MutableHeaders["X-Proxy-Key"] = Config.ProxyKey
             MutableHeaders["X-Target-Host"] = Domain
             FormattedHeaders = CreateHeaders(MutableHeaders)
