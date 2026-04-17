@@ -831,7 +831,7 @@ local function Request(Method, Url, Params, RequestHeaders, RequestBody, Callbac
                 else
                     print("Rate limited, retrying in " .. Delay .. " seconds...")
                     Wait(Delay)
-                    Delay = Delay * 2 -- exponential back-off
+                    Delay = math.min(Delay * 2, 300) -- exponential back-off, capped at 5 minutes
                 end
                 Attempt = Attempt + 1
             else
@@ -846,23 +846,14 @@ local function Request(Method, Url, Params, RequestHeaders, RequestBody, Callbac
 
                 Attempt = Attempt + 1
                 if Attempt > MaxRetries then
-                    break
+                    return Headers, TryDecodeJson(Body)
                 end
 
                 print("Request failed, retrying in " .. Delay .. " seconds...")
                 Wait(Delay)
-                Delay = Delay * 2 -- exponential back-off
+                Delay = math.min(Delay * 2, 300) -- exponential back-off, capped at 5 minutes
             end
         end
-
-        local Headers, Body = HTTPRequest(Method, ActualUrl, FormattedHeaders, RequestBody)
-        NormalizeHeaders(Headers)
-        local ResponseCode = tonumber(Headers.code)
-        local DecodedBody = TryDecodeJson(Body)
-        if ResponseCode and ResponseCode < 400 and UseCache and CacheKey then
-            SetCache(CacheKey, Headers, DecodedBody, Options)
-        end
-        return Headers, DecodedBody
     end
 
     if Callback and type(Callback) == "function" then
