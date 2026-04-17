@@ -23,7 +23,14 @@ Client:on('ready', function()
     SlashCommandCollector:Publish(Client)
     UserCommandCollector:Publish(Client)
 
+    local AuditInProgress = false
+
     local function RunScheduledAudit()
+        if AuditInProgress then
+            print("[Scheduled Audit] Skipped: previous run still in progress")
+            return
+        end
+        AuditInProgress = true
         coroutine.wrap(function()
             local Success, Error = pcall(function()
                 local Guild = Client:getGuild(FasteAudit.BHOP_SERVER_ID)
@@ -46,10 +53,16 @@ Client:on('ready', function()
                     end
                 end)
             end
+
+            AuditInProgress = false
         end)()
     end
 
-    Timer.setInterval(24 * 60 * 60 * 1000, RunScheduledAudit)
+    local SecondsUntilNextUtcMidnight = 86400 - (os.time() % 86400)
+    Timer.setTimeout(SecondsUntilNextUtcMidnight * 1000, function()
+        RunScheduledAudit()
+        Timer.setInterval(24 * 60 * 60 * 1000, RunScheduledAudit)
+    end)
     RunScheduledAudit()
 end)
 
