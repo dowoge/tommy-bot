@@ -21,9 +21,9 @@ local OPTION_KEY_VARIANTS = {
 
 local function IsOptionsTable(Value)
     if type(Value) ~= "table" then return false end
-    for Canonical, Variants in pairs(OPTION_KEY_VARIANTS) do
+    for Canonical, Variants in next, OPTION_KEY_VARIANTS do
         if Value[Canonical] ~= nil then return true end
-        for _, Variant in ipairs(Variants) do
+        for _, Variant in next, Variants do
             if Value[Variant] ~= nil then return true end
         end
     end
@@ -32,9 +32,9 @@ end
 
 local function NormalizeOptionKeys(Options)
     if not Options then return end
-    for Canonical, Variants in pairs(OPTION_KEY_VARIANTS) do
+    for Canonical, Variants in next, OPTION_KEY_VARIANTS do
         if Options[Canonical] == nil then
-            for _, Variant in ipairs(Variants) do
+            for _, Variant in next, Variants do
                 if Options[Variant] ~= nil then
                     Options[Canonical] = Options[Variant]
                     break
@@ -205,13 +205,13 @@ local function QueryParams(Params) -- {Name = Value, ...}
         return tostring(a) < tostring(b)
     end)
 
-    for _, ParamName in ipairs(Keys) do
+    for _, ParamName in next, Keys do
         local ParamValue = Params[ParamName]
         if ParamValue ~= nil then
             if type(ParamValue) == "table" then
                 local Parts = {}
                 if #ParamValue > 0 then
-                    for _, Item in ipairs(ParamValue) do
+                    for _, Item in next, ParamValue do
                         local Normalized = NormalizeQueryValue(Item)
                         if Normalized ~= nil then
                             Parts[#Parts + 1] = Normalized

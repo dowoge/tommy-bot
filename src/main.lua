@@ -12,7 +12,7 @@ Discordia.extensions()
 
 if not table.clear then
     table.clear = function(t)
-        for k in pairs(t) do
+        for k in next, t do
             t[k] = nil
         end
     end
