@@ -15,6 +15,40 @@ local function DebugPrint(...)
     if DEBUG then print(...) end
 end
 
+local OPTION_KEY_VARIANTS = {
+    cacheTtl = { "CacheTtl", "CacheTTL" },
+    noCache = { "NoCache" },
+    cacheKey = { "CacheKey" },
+    waitUntilSuccess = { "WaitUntilSuccess" },
+    ignoreRateLimit = { "IgnoreRateLimit" },
+    maxRetries = { "MaxRetries" },
+}
+
+local function IsOptionsTable(Value)
+    if type(Value) ~= "table" then return false end
+    for Canonical, Variants in pairs(OPTION_KEY_VARIANTS) do
+        if Value[Canonical] ~= nil then return true end
+        for _, Variant in ipairs(Variants) do
+            if Value[Variant] ~= nil then return true end
+        end
+    end
+    return false
+end
+
+local function NormalizeOptionKeys(Options)
+    if not Options then return end
+    for Canonical, Variants in pairs(OPTION_KEY_VARIANTS) do
+        if Options[Canonical] == nil then
+            for _, Variant in ipairs(Variants) do
+                if Options[Variant] ~= nil then
+                    Options[Canonical] = Options[Variant]
+                    break
+                end
+            end
+        end
+    end
+end
+
 local CacheStore = {}
 local CacheFilePath = "./HTTPCache.json"
 local CacheSaveIntervalSeconds = 300
@@ -711,14 +745,6 @@ local function Request(Method, Url, Params, RequestHeaders, RequestBody, Callbac
         error("[HTTP] Url is not a string")
     end
 
-    local function IsOptionsTable(Value)
-        return type(Value) == "table" and (
-            Value.CacheTTL or Value.CacheTtl or Value.cacheTtl or Value.NoCache or Value.noCache
-            or Value.CacheKey or Value.cacheKey or Value.WaitUntilSuccess or Value.waitUntilSuccess
-            or Value.IgnoreRateLimit or Value.ignoreRateLimit or Value.MaxRetries or Value.maxRetries
-        )
-    end
-
     if Options == nil then
         if IsOptionsTable(Callback) then
             Options = Callback
@@ -738,16 +764,7 @@ local function Request(Method, Url, Params, RequestHeaders, RequestBody, Callbac
         end
     end
 
-    -- options detection handled above
-
-    if Options then
-        Options.cacheTtl = Options.cacheTtl or Options.CacheTtl or Options.CacheTTL
-        Options.noCache = Options.noCache or Options.NoCache
-        Options.cacheKey = Options.cacheKey or Options.CacheKey
-        Options.waitUntilSuccess = Options.waitUntilSuccess or Options.WaitUntilSuccess
-        Options.ignoreRateLimit = Options.ignoreRateLimit or Options.IgnoreRateLimit
-        Options.maxRetries = Options.maxRetries or Options.MaxRetries
-    end
+    NormalizeOptionKeys(Options)
 
     if type(RequestBody) == "table" then
         RequestBody = json.encode(RequestBody)
