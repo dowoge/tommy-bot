@@ -23,15 +23,15 @@ SourceSubCommandHandler:AddSubCommand(VSensMultiplierSubCommand.name, function(I
 	local MYaw = Args.m_yaw and tonumber(Args.m_yaw) or SOURCE_DEFAULT_M_YAW
 
 	if type(Sensitivity) ~= 'number' then
-		error('"sensitivity" argument was not a valid number')
+		return Interaction:reply('"sensitivity" argument was not a valid number', true)
 	end
 
 	if type(VSensMultiplier) ~= 'number' then
-		error('"multiplier" argument was not a valid number')
+		return Interaction:reply('"multiplier" argument was not a valid number', true)
 	end
 
 	if type(MYaw) ~= 'number' then
-		error('"m_yaw" argument was not a valid number')
+		return Interaction:reply('"m_yaw" argument was not a valid number', true)
 	end
 
 	local OldVSensMultiplier = SOURCE_DEFAULT_M_YAW / MYaw
