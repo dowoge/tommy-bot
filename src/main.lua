@@ -1,6 +1,8 @@
 local Discordia = require('discordia')
 local Timer = require('timer')
 local Token = require('./Modules/Token.lua')
+assert(type(Token) == "string" and #Token > 0,
+    "src/Modules/Token.lua must return your bot token as a string (see README setup)")
 local CommandCollector = require('./Modules/CommandCollector.lua')
 local FasteAudit = require('./SlashCommands/FasteAudit.lua')
 require('discordia-slash')
