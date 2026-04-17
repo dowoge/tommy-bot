@@ -28,14 +28,29 @@ local COLOURS = {
 	RED = 0xff0000
 }
 
---initialize minecraft ip data
-local MinecraftDataFile = io.open('minecraft_data.json', 'r')
-if not MinecraftDataFile or (MinecraftDataFile and MinecraftDataFile:read('*a') == '') then
-	print('no such file exists! so make it')
-	io.open('minecraft_data.json', 'w+'):write(json.encode({})):close()
+local MINECRAFT_DATA_PATH = 'minecraft_data.json'
+
+local function ReadMinecraftData()
+	local Handle = io.open(MINECRAFT_DATA_PATH, 'r')
+	if not Handle then return nil end
+	local Contents = Handle:read('*a')
+	Handle:close()
+	if not Contents or Contents == '' then return nil end
+	local Ok, Decoded = pcall(json.decode, Contents)
+	if not Ok then return nil end
+	return Decoded
 end
-if MinecraftDataFile then
-	MinecraftDataFile:close()
+
+local function WriteMinecraftData(Data)
+	local Handle, OpenError = io.open(MINECRAFT_DATA_PATH, 'w+')
+	if not Handle then return false, OpenError end
+	Handle:write(json.encode(Data))
+	Handle:close()
+	return true
+end
+
+if not ReadMinecraftData() then
+	WriteMinecraftData({})
 end
 
 MinecraftSubCommandHandler:AddSubCommand(MinecraftStatusSubCommand.name, function(Interaction, Command, Args)
@@ -44,7 +59,7 @@ MinecraftSubCommandHandler:AddSubCommand(MinecraftStatusSubCommand.name, functio
 		return Interaction:reply('You cannot use this command outside of a Discord server', true)
 	end
 
-	local GlobalMinecraftData = json.decode(io.open('minecraft_data.json', 'r'):read('*a'))
+	local GlobalMinecraftData = ReadMinecraftData()
 	if not GlobalMinecraftData then
 		return Interaction:reply('Could not read server data', true)
 	end
@@ -117,9 +132,12 @@ MinecraftSubCommandHandler:AddSubCommand(MinecraftSetIpSubCommand.name, function
 
 	local GuildMinecraftData = { IP = ServerIP, PORT = ServerPort }
 
-	local GlobalMinecraftData = json.decode(io.open('minecraft_data.json', 'r'):read('*a'))
+	local GlobalMinecraftData = ReadMinecraftData() or {}
 	GlobalMinecraftData[GuildId] = GuildMinecraftData
-	io.open('minecraft_data.json', 'w+'):write(json.encode(GlobalMinecraftData)):close()
+	local Ok, WriteError = WriteMinecraftData(GlobalMinecraftData)
+	if not Ok then
+		return Interaction:reply('Failed to save server data: ' .. tostring(WriteError), true)
+	end
 
 	return Interaction:reply('Successfully added `' .. ServerIP .. ':' .. ServerPort .. '` for ServerId=' .. GuildId)
 end)
