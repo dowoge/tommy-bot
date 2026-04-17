@@ -2,11 +2,6 @@ local Http = require('coro-http')
 local HTTPRequest = Http.request
 
 local Timer = require("timer")
-local Sleep = Timer.sleep
-
-local function Wait(n)
-    return Sleep(n * 1000)
-end
 
 local json = require('json')
 
@@ -517,7 +512,7 @@ local function EnforceRateLimit(Domain, Options)
 
     local WaitSeconds = math.max(GetWait(Server), GetWait(Custom), GetWindowWait(Server and Server.Windows))
     if WaitSeconds > 0 then
-        Wait(WaitSeconds)
+        Timer.sleep(WaitSeconds * 1000)
     end
 end
 
@@ -851,10 +846,10 @@ local function Request(Method, Url, Params, RequestHeaders, RequestBody, Callbac
                 local WaitSeconds = GetRateLimitWaitSeconds(Domain, Headers)
                 if WaitSeconds and WaitSeconds > 0 then
                     DebugPrint("Rate limited, retrying in " .. WaitSeconds .. " seconds...")
-                    Wait(WaitSeconds)
+                    Timer.sleep(WaitSeconds * 1000)
                 else
                     DebugPrint("Rate limited, retrying in " .. Delay .. " seconds...")
-                    Wait(Delay)
+                    Timer.sleep(Delay * 1000)
                     Delay = math.min(Delay * 2, 300) -- exponential back-off, capped at 5 minutes
                 end
                 Attempt = Attempt + 1
@@ -874,7 +869,7 @@ local function Request(Method, Url, Params, RequestHeaders, RequestBody, Callbac
                 end
 
                 DebugPrint("Request failed, retrying in " .. Delay .. " seconds...")
-                Wait(Delay)
+                Timer.sleep(Delay * 1000)
                 Delay = math.min(Delay * 2, 300) -- exponential back-off, capped at 5 minutes
             end
         end
