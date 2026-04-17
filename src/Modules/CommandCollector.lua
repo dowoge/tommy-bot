@@ -1,4 +1,4 @@
-local RELATIVE_PATH_TO_COMMANDS = '../' -- this is because the require function will call to a path relative to this current file :D
+local RELATIVE_PATH_TO_COMMANDS = '../'
 local IGNORE_STARTING_FILE_NAME = '_'
 
 local OPERATING_SYSTEM = package.loaded.jit.os

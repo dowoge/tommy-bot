@@ -9,7 +9,7 @@ local RequestHeaders = {
     ["X-API-Key"] = APIKeys.StrafesNET
 }
 
-local function L1Copy(t, b)
+local function ShallowCopy(t, b)
     b = b or {}
     for x, y in next, t do b[x] = y end
     return b
@@ -480,7 +480,7 @@ function StrafesNET.GetUserOnlineStatus(UserId)
     local _, LastOnlineBody = Request("POST", ROBLOX_PRESENCE_URL .. "presence/last-online", nil, nil, { userIds = { UserId } })
     local LastOnline = LastOnlineBody and LastOnlineBody.lastOnlineTimestamps and LastOnlineBody.lastOnlineTimestamps[1]
     if LastOnline then
-        L1Copy(LastOnline, Presence)
+        ShallowCopy(LastOnline, Presence)
     end
 
     return Presence
