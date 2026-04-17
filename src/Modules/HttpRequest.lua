@@ -446,9 +446,7 @@ local function UpdateServerRateLimit(Domain, Headers)
         State.ResetAt = NowTime + RetryAfter
     end
 
-    if State.ResetAt or State.Remaining then
-        RateLimitState.Server[Domain] = State
-    end
+    RateLimitState.Server[Domain] = State
 end
 
 local function EnforceRateLimit(Domain, Options)
