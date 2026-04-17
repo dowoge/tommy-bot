@@ -531,7 +531,10 @@ local function RunAudit(Guild, Cleanup, DryRun)
 	end
 
 	local FileName = "./fasteaudit-output-" .. os.time() .. ".txt"
-	local FileHandle = io.open(FileName, "w+")
+	local FileHandle, OpenError = io.open(FileName, "w+")
+	if not FileHandle then
+		error("Failed to open " .. FileName .. " for writing: " .. tostring(OpenError))
+	end
 	FileHandle:write(FinalText)
 	FileHandle:close()
 
