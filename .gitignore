@@ -1,10 +1,13 @@
 discordia.log
-gateway.json
 APIKeys.lua
 Token.lua
 RankConstants.lua
 ProxyConfig.lua
 deps
 sensdb.lua
-*.json
+gateway.json
+HTTPCache.json
+minecraft_data.json
+sensdb.json
+restart.txt
 .gitignore
