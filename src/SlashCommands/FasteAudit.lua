@@ -33,22 +33,22 @@ local function GetFasteRoleId()
 		error("Failed to fetch group roles (HTTP " .. tostring(Headers and Headers.code) .. ")")
 	end
 	local FasteId, FasteRank
-	local MemberRoleId
+	local BhopperRoleId
 	for _, Role in next, Body.roles do
 		if Role.name then
 			local LoweredName = Role.name:lower()
 			if LoweredName == "faste" then
 				FasteId = Role.id
 				FasteRank = tonumber(Role.rank)
-			elseif LoweredName == "member" then
-				MemberRoleId = Role.id
+			elseif LoweredName == "bhopper" then
+				BhopperRoleId = Role.id
 			end
 		end
 	end
 	if not FasteId then
 		error("Could not find the 'faste' role in group " .. GROUP_ID)
 	end
-	return FasteId, FasteRank, MemberRoleId
+	return FasteId, FasteRank, BhopperRoleId
 end
 
 local VALID_GAME_IDS = {
@@ -229,7 +229,7 @@ local function FormatDiscordRoleResult(Result, DryRun)
 end
 
 local function RunAudit(Guild, Cleanup, DryRun)
-	local RoleSetId, FasteRoleRank, MemberRoleId = GetFasteRoleId()
+	local RoleSetId, FasteRoleRank, BhopperRoleId = GetFasteRoleId()
 	local Members = StrafesNET.GetAllGroupRoleMembers(GROUP_ID, RoleSetId)
 
 	if #Members == 0 then
@@ -417,15 +417,19 @@ local function RunAudit(Guild, Cleanup, DryRun)
 
 		-- Roblox demotions (ineligible users)
 		local RobloxChangeLines = {}
-		if MemberRoleId then
+		if not BhopperRoleId then
+			if #IneligibleLines > 0 then
+				table.insert(RobloxChangeLines, "Could not find the 'bhopper' role in group " .. GROUP_ID .. "; " .. #IneligibleLines .. " ineligible user(s) not demoted.")
+			end
+		else
 			for _, Entry in next, IneligibleLines do
 				local UserPrefix = Entry.DisplayName .. " (@" .. Entry.Username .. ") [" .. Entry.UserId .. "]"
 				if DryRun then
-					table.insert(RobloxChangeLines, DryRunPrefix .. UserPrefix .. " | Would demote to Member")
+					table.insert(RobloxChangeLines, DryRunPrefix .. UserPrefix .. " | Would demote to Bhopper")
 				else
-					local Ok, Headers = pcall(StrafesNET.UpdateGroupMemberRole, GROUP_ID, Entry.UserId, tostring(MemberRoleId))
+					local Ok, Headers = pcall(StrafesNET.UpdateGroupMemberRole, GROUP_ID, Entry.UserId, tostring(BhopperRoleId))
 					if Ok and Headers and tonumber(Headers.code) and tonumber(Headers.code) < 400 then
-						table.insert(RobloxChangeLines, UserPrefix .. " | Demoted to Member")
+						table.insert(RobloxChangeLines, UserPrefix .. " | Demoted to Bhopper")
 					else
 						local ErrMsg = Ok and ("HTTP " .. tostring(Headers.code)) or tostring(Headers)
 						table.insert(RobloxChangeLines, UserPrefix .. " | Demotion failed: " .. ErrMsg)
