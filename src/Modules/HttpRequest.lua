@@ -19,7 +19,7 @@ local CacheStore = {}
 local CacheFilePath = "./HTTPCache.json"
 local CacheSaveIntervalSeconds = 300
 local LastCacheSaveAt = 0
-local CacheSavePending = false
+local CacheSavePendingTimer = nil
 local RateLimitState = {
     Server = {},
     Custom = {}
@@ -91,14 +91,17 @@ end
 local function SaveCacheToFile(Force)
     local NowTime = os.time()
     if not Force and (NowTime - LastCacheSaveAt) < 5 then
-        if not CacheSavePending then
-            CacheSavePending = true
-            Timer.setTimeout(5000, function()
-                CacheSavePending = false
+        if not CacheSavePendingTimer then
+            CacheSavePendingTimer = Timer.setTimeout(5000, function()
+                CacheSavePendingTimer = nil
                 SaveCacheToFile(true)
             end)
         end
         return
+    end
+    if CacheSavePendingTimer then
+        Timer.clearTimeout(CacheSavePendingTimer)
+        CacheSavePendingTimer = nil
     end
     PruneCache()
     local Serializable = {}
