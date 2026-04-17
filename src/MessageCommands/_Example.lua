@@ -1,6 +1,6 @@
 local SlashCommandTools = require('discordia-slash').util.tools()
 
-local GetProfilePictureCommand = SlashCommandTools.messageCommand('Copy message', 'Says the same exact message (text only)')
+local CopyMessageCommand = SlashCommandTools.messageCommand('Copy message', 'Says the same exact message (text only)')
 
 local function Callback(Interaction, Command, Message)
 	local MessageContent = Message.content
@@ -10,6 +10,6 @@ local function Callback(Interaction, Command, Message)
 end
 
 return {
-	Command = GetProfilePictureCommand,
+	Command = CopyMessageCommand,
 	Callback = Callback
 }
