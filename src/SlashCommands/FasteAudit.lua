@@ -37,16 +37,15 @@ local function GetFasteRoleId()
 	end
 	local FasteId, FasteRank
 	local MemberRoleId
-	local LowestRank
 	for _, Role in next, Body.roles do
-		if Role.name and Role.name:lower() == "faste" then
-			FasteId = Role.id
-			FasteRank = tonumber(Role.rank)
-		end
-		local RoleRank = tonumber(Role.rank) or 0
-		if RoleRank > 0 and (LowestRank == nil or RoleRank < LowestRank) then
-			MemberRoleId = Role.id
-			LowestRank = RoleRank
+		if Role.name then
+			local LoweredName = Role.name:lower()
+			if LoweredName == "faste" then
+				FasteId = Role.id
+				FasteRank = tonumber(Role.rank)
+			elseif LoweredName == "member" then
+				MemberRoleId = Role.id
+			end
 		end
 	end
 	if not FasteId then
