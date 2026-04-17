@@ -1,6 +1,8 @@
 local SlashCommandTools = require('discordia-slash').util.tools()
 local StrafesNET = require('../Modules/StrafesNET.lua')
 local Owners = require('../Modules/Owners.lua')
+local Format = require('../Modules/Format.lua')
+local Pad = Format.Pad
 
 local FasteAuditCommand = SlashCommandTools.slashCommand('fasteaudit', 'Audits faste role members for world record eligibility')
 local CleanupOption = SlashCommandTools.boolean('cleanup', 'Perform Roblox and Discord role changes')
@@ -23,12 +25,6 @@ for _, StyleId in next, StrafesNET.BhopStyles do
 end
 for _, StyleId in next, StrafesNET.SurfStyles do
 	ALL_STYLES[StyleId] = true
-end
-
-local function Pad(String, Padding)
-	Padding = Padding or 20
-	String = tostring(String)
-	return String .. string.rep(" ", math.max(0, Padding - #String))
 end
 
 local function GetFasteRoleId()

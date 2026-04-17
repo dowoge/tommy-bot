@@ -5,8 +5,10 @@ local Date = Discordia.Date
 Discordia.extensions()
 local StrafesNET = require('../Modules/StrafesNET.lua')
 local Owners = require('../Modules/Owners.lua')
+local Format = require('../Modules/Format.lua')
 
 local SafeNumberToString = StrafesNET.SafeNumberToString
+local Pad = Format.Pad
 
 local StrafesNETMaps = StrafesNET.GetAllMaps()
 
@@ -40,12 +42,6 @@ CalculateCommand:addOption(SortOption)
 CalculateCommand:addOption(UsernameOption)
 CalculateCommand:addOption(UserIdOption)
 CalculateCommand:addOption(MemberOption)
-
-local function Pad(String, Padding)
-    Padding = Padding or 20
-    String = tostring(String)
-    return String..string.rep(" ", Padding - #String)
-end
 
 local function RankPointsSort(Time1, Time2)
     return Time1.RankPoints < Time2.RankPoints
