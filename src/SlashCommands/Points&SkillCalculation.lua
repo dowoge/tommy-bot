@@ -125,26 +125,19 @@ local function Callback(Interaction, Command, Args)
 
     local Times = StrafesNET.GetAllUserTimes(UserInfo.id, GameId, 0, StyleId)
     local TimeIds = {}
+    local MapIds = {}
+    local NowTime = os.time()
     for _, Time in next, Times do
         local MapId = SafeNumberToString(Time.map.id)
         local Map = GameMaps[MapId]
         local MapDate = Map and Map.date and Date.fromISO(Map.date):toSeconds() or nil
-        if MapDate and MapDate < os.time() then
+        if MapDate and MapDate < NowTime then
             NTimes = NTimes + 1
             table.insert(TimeIds, SafeNumberToString(Time.id))
-        end
-    end
-    local TimePlacements = StrafesNET.GetAllTimePlacements(TimeIds)
-
-    local MapIds = {}
-    for _, Time in next, Times do
-        local MapId = SafeNumberToString(Time.map.id)
-        local Map = GameMaps[MapId]
-        local MapDate = Map and Map.date and Date.fromISO(Map.date):toSeconds() or nil
-        if MapDate and MapDate < os.time() then
             table.insert(MapIds, MapId)
         end
     end
+    local TimePlacements = StrafesNET.GetAllTimePlacements(TimeIds)
     local MapCompletions = StrafesNET.GetMapsCompletionCounts(MapIds, GameId, 0, StyleId)
 
     local TotalPoints = 0
