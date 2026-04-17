@@ -328,7 +328,7 @@ local function RunAudit(Guild, Cleanup, DryRun)
 
 			PageHasRecent = true
 			local GameId = tonumber(WR.game_id)
-			if (GameId == 1 or GameId == 2) and WR.user then
+			if VALID_GAME_IDS[GameId] and WR.user then
 				local WRUserId = tostring(WR.user.id)
 				if not ExistingRobloxIds[WRUserId] and not CandidateIds[WRUserId] then
 					CandidateIds[WRUserId] = true
