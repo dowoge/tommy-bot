@@ -7,6 +7,7 @@ local function Callback(Interaction, Command, Member)
 	if AvatarURL then
 		return Interaction:reply(AvatarURL, true)
 	end
+	return Interaction:reply('Could not retrieve avatar', true)
 end
 
 return {
