@@ -156,7 +156,7 @@ local function Callback(Interaction, Command, Args)
         local MapId = SafeNumberToString(Time.map.id)
         local MapCompletion = MapCompletions[MapId]
         local Map = GameMaps[MapId]
-        local MapDate = Date.fromISO(Map.date):toSeconds()
+        local MapDate = Map and Map.date and Date.fromISO(Map.date):toSeconds() or nil
         if MapDate and MapDate < os.time() and Placement and MapCompletion then
             local RankPoints = StrafesNET.CalculatePoints(Placement, MapCompletion)
             local Skill = StrafesNET.CalculateSkill(Placement, MapCompletion)
