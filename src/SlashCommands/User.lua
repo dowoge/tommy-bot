@@ -150,7 +150,7 @@ local function Callback(Interaction, Command, Args)
 	end
 
 	local Description = UserInfo.description == '' and 'This user has no description' or UserInfo.description
-	local Created = tostring(Date.fromISO(UserInfo.created):toSeconds())
+	local Created = Date.fromISO(UserInfo.created):toSeconds()
 	local Current = Date():toSeconds()
 	local AccountAge = Round((Current - Created) / 86400)
 	local IsBanned = UserInfo.isBanned
