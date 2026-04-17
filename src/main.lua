@@ -8,9 +8,11 @@ require('discordia-slash')
 local Client = Discordia.Client():useApplicationCommands()
 Discordia.extensions()
 
-table.clear = function(t)
-    for k in pairs(t) do
-        t[k] = nil
+if not table.clear then
+    table.clear = function(t)
+        for k in pairs(t) do
+            t[k] = nil
+        end
     end
 end
 
