@@ -7,8 +7,9 @@ local MessageOption = SlashCommandTools.string('message', 'What the bot will app
 PongCommand:addOption(MessageOption)
 
 local function Callback(Interaction, Command, Args)
-	local Message = Args.message
-	return Interaction:reply('Pong! '..Message)
+	local Message = Args and Args.message or ''
+	-- pass `true` as the second arg to Interaction:reply to make replies ephemeral
+	return Interaction:reply('Pong! ' .. Message)
 end
 
 return {
