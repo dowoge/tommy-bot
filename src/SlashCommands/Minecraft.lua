@@ -121,12 +121,12 @@ MinecraftSubCommandHandler:AddSubCommand(MinecraftSetIpSubCommand.name, function
 
 	local GuildId = Interaction.guild and Interaction.guild.id
 	if not GuildId then
-		return Interaction:reply('You cannot use this command outside of a Discord server')
+		return Interaction:reply('You cannot use this command outside of a Discord server', true)
 	end
 
 	local ServerIP = ServerIPStr:match("(%d+%.%d+%.%d+%.%d+)") or ServerIPStr:match("(%w*%.?%w+%.%w+)")
 	if not ServerIP then
-		return Interaction:reply('Invalid server IP')
+		return Interaction:reply('Invalid server IP', true)
 	end
 	local ServerPort = ServerIPStr:match(ServerIP .. ':(%d+)') or 25565
 
