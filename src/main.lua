@@ -71,7 +71,11 @@ end)
 local function RunCallback(Callback, Interaction, Command, Args)
     local Success, Return = pcall(Callback, Interaction, Command, Args)
     if not Success then
-        Interaction:reply('Error encountered when trying to run command: ' .. tostring(Return), true)
+        local ReplySuccess = pcall(Interaction.reply, Interaction,
+            'Error encountered when trying to run command: ' .. tostring(Return), true)
+        if not ReplySuccess then
+            print('[Callback] Failed to send error reply for ' .. tostring(Command and Command.name) .. ': ' .. tostring(Return))
+        end
     end
 end
 
