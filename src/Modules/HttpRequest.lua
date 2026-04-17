@@ -10,6 +10,11 @@ end
 
 local json = require('json')
 
+local DEBUG = false
+local function DebugPrint(...)
+    if DEBUG then print(...) end
+end
+
 local CacheStore = {}
 local CacheFilePath = "./HTTPCache.json"
 local CacheSaveIntervalSeconds = 300
@@ -753,7 +758,7 @@ local function Request(Method, Url, Params, RequestHeaders, RequestBody, Callbac
     local FormattedHeaders = CreateHeaders(MutableHeaders) -- at worse, this will just be an empty table (which cannot mess up the request)
 
     local RequestUrl = Url .. QueryString
-    print(RequestUrl)
+    DebugPrint(RequestUrl)
 
     MaxRetries = MaxRetries or (Options and Options.maxRetries) or 10
     if Options and Options.waitUntilSuccess then
@@ -783,7 +788,7 @@ local function Request(Method, Url, Params, RequestHeaders, RequestBody, Callbac
             CacheKey = GetCacheKey(Method, RequestUrl, Options)
             CachedHeaders, CachedBody = GetCached(CacheKey)
             if CachedHeaders then
-                print("Attempt:", 1, "Status code:", "CACHE")
+                DebugPrint("Attempt:", 1, "Status code:", "CACHE")
                 return CachedHeaders, CachedBody
             end
 
@@ -798,7 +803,7 @@ local function Request(Method, Url, Params, RequestHeaders, RequestBody, Callbac
             EnforceRateLimit(Domain, Options)
             local Headers, Body = HTTPRequest(Method, ActualUrl, FormattedHeaders, RequestBody)
             NormalizeHeaders(Headers)
-            print("Attempt:", Attempt + 1, "Status code:", Headers.code)
+            DebugPrint("Attempt:", Attempt + 1, "Status code:", Headers.code)
 
             local ResponseCode = tonumber(Headers.code)
 
@@ -826,10 +831,10 @@ local function Request(Method, Url, Params, RequestHeaders, RequestBody, Callbac
                 MarkRateLimited(Domain, Headers)
                 local WaitSeconds = GetRateLimitWaitSeconds(Domain, Headers)
                 if WaitSeconds and WaitSeconds > 0 then
-                    print("Rate limited, retrying in " .. WaitSeconds .. " seconds...")
+                    DebugPrint("Rate limited, retrying in " .. WaitSeconds .. " seconds...")
                     Wait(WaitSeconds)
                 else
-                    print("Rate limited, retrying in " .. Delay .. " seconds...")
+                    DebugPrint("Rate limited, retrying in " .. Delay .. " seconds...")
                     Wait(Delay)
                     Delay = math.min(Delay * 2, 300) -- exponential back-off, capped at 5 minutes
                 end
@@ -849,7 +854,7 @@ local function Request(Method, Url, Params, RequestHeaders, RequestBody, Callbac
                     return Headers, TryDecodeJson(Body)
                 end
 
-                print("Request failed, retrying in " .. Delay .. " seconds...")
+                DebugPrint("Request failed, retrying in " .. Delay .. " seconds...")
                 Wait(Delay)
                 Delay = math.min(Delay * 2, 300) -- exponential back-off, capped at 5 minutes
             end
