@@ -1,5 +1,8 @@
 #!/bin/sh
 
+# Requires git and tmux on PATH. The bot runs inside a detached tmux session
+# named "tommy-bot" so it survives shell disconnection.
+
 set -eu
 
 SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)

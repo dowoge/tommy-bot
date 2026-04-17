@@ -32,6 +32,11 @@ return {
 }
 ```
 
+### Running
+
+- Windows: `start.bat`
+- Linux: `start.sh` (requires `git` and `tmux`; the bot runs inside a detached tmux session named `tommy-bot`)
+
 ### T.O.S.
 TBD
 
