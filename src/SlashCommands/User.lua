@@ -165,11 +165,15 @@ local function Callback(Interaction, Command, Args)
 	end
 	local UsernameHistoryString = table.concat(UsernameHistoryTable, ', ')
 
-	local OnlineStatusInfo = { lastLocation = "Unknown", lastOnline = 0, userPresenceType = -1 }
+	local OnlineStatusInfo = StrafesNET.GetUserOnlineStatus(Id) or {}
 
-	local LastLocation = OnlineStatusInfo.lastLocation
+	local LastLocation = OnlineStatusInfo.lastLocation or "Unknown"
 	if OnlineStatusInfo.userPresenceType == 2 then LastLocation = "Ingame" end
 	local LastOnline = 0
+	if type(OnlineStatusInfo.lastOnline) == "string" then
+		local Ok, Parsed = pcall(function() return Date.fromISO(OnlineStatusInfo.lastOnline):toSeconds() end)
+		if Ok then LastOnline = tonumber(Parsed) or 0 end
+	end
 
 	local VerificationAssetId = StrafesNET.GetVerificationItemId(Id)
 	local VerificationDate = "Not verified"
