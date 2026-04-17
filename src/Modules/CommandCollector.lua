@@ -36,7 +36,7 @@ end
 function CommandCollector:Collect()
 	if self.Collected then
 		print('Command collector for', self.Prefix, 'commands was already collected')
-		return
+		return self
 	end
 
 	local CommandsContainerPath = self.Prefix .. 'Commands/'
@@ -45,13 +45,13 @@ function CommandCollector:Collect()
 		if File:sub(1, 1) ~= IGNORE_STARTING_FILE_NAME then
 			local Success, Return = pcall(require, RELATIVE_PATH_TO_COMMANDS .. CommandsContainerPath .. File)
 			if Success then
-				if not Return.Command or not Return.Callback then
+				if Return.Command and Return.Callback then
+					print('Loaded', CommandsContainerPath .. File)
+					table.insert(self.Collection, { Command = Return.Command, Callback = Return.Callback })
+				else
 					print('Malformed command data in', CommandsContainerPath .. File,
 						'Reason: returned command data table is missing a Command or Callback field')
-					return
 				end
-				print('Loaded', CommandsContainerPath .. File)
-				table.insert(self.Collection, { Command = Return.Command, Callback = Return.Callback })
 			else
 				print('Error loading', CommandsContainerPath .. File, 'Error:', Return)
 			end
