@@ -158,7 +158,7 @@ local function Callback(Interaction, Command, Args)
 	local DisplayName = UserInfo.displayName
 
 	local _, UsernameHistoryBody = StrafesNET.GetUserUsernameHistory(Id)
-	local UsernameHistory = UsernameHistoryBody.data or {}
+	local UsernameHistory = type(UsernameHistoryBody) == "table" and UsernameHistoryBody.data or {}
 	local UsernameHistoryTable = {}
 	for _, UsernameObj in next, UsernameHistory do
 		table.insert(UsernameHistoryTable, UsernameObj.name)
@@ -190,7 +190,7 @@ local function Callback(Interaction, Command, Args)
 	end
 
 	local _, BadgeRequest = StrafesNET.GetBadgesAwardedDates(Id, BhopBadges)
-	local BadgeData = BadgeRequest.data
+	local BadgeData = type(BadgeRequest) == "table" and BadgeRequest.data or nil
 
 	local FirstBadge, FirstBadgeDate = 0, math.huge
 	if BadgeData then
@@ -205,7 +205,7 @@ local function Callback(Interaction, Command, Args)
 	end
 
 	local _, PopularBadgeRequest = StrafesNET.GetBadgesAwardedDates(Id, PopularBadges)
-	local PopularBadgeData = PopularBadgeRequest.data
+	local PopularBadgeData = type(PopularBadgeRequest) == "table" and PopularBadgeRequest.data or nil
 
 	local OldestThree = {{math.huge}, {math.huge}, {math.huge}}
 	if PopularBadgeData then
@@ -237,14 +237,14 @@ local function Callback(Interaction, Command, Args)
 	end
 
 	local _, UserThumbnailBody = StrafesNET.GetUserThumbnail(Id)
-	local UserThumbnail = UserThumbnailBody.data[1]
+	local UserThumbnail = type(UserThumbnailBody) == "table" and UserThumbnailBody.data and UserThumbnailBody.data[1] or nil
 
 	local Embed = {
 		title = DisplayName .. ' (@' .. Name .. ')',
 		url = 'https://roblox.com/users/' .. Id .. '/profile',
-		thumbnail = {
+		thumbnail = UserThumbnail and {
 			url = UserThumbnail.imageUrl,
-		},
+		} or nil,
 		fields = {
 			{ name = 'ID',             value = Id,                                  inline = true },
 			{ name = 'Account Age',    value = AccountAge .. ' days',               inline = true },
