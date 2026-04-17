@@ -401,9 +401,8 @@ function StrafesNET.GetAllMaps()
         local _, Body = StrafesNET.ListMaps(GAME_IDS.BHOP, PageSize, Page)
         local MapsData = Body.data
         for MapIndex = 1, #MapsData do
-            local Map = MapsData[MapIndex]
-                local Map = NormalizeMap(MapsData[MapIndex])
-                local MapId = Map.id
+            local Map = NormalizeMap(MapsData[MapIndex])
+            local MapId = Map.id
             StrafesNET.Maps[GAME_IDS.BHOP][MapId] = Map
         end
         Page = Page + 1
@@ -419,9 +418,8 @@ function StrafesNET.GetAllMaps()
         local _, Body = StrafesNET.ListMaps(GAME_IDS.SURF, PageSize, Page)
         local MapsData = Body.data
         for MapIndex = 1, #MapsData do
-            local Map = MapsData[MapIndex]
-                local Map = NormalizeMap(MapsData[MapIndex])
-                local MapId = Map.id
+            local Map = NormalizeMap(MapsData[MapIndex])
+            local MapId = Map.id
             StrafesNET.Maps[GAME_IDS.SURF][MapId] = Map
         end
         Page = Page + 1
