@@ -117,14 +117,15 @@ local function Callback(Interaction, Command, Args)
 				ErrorMessage = "Could not find user info from user id ("..Args.username..")"
 			end
 		elseif Args.user_id then
-			if tostring(Args.user_id):match("e") then
-				ErrorMessage = "User id too high for lua number precision (User id: " .. tostring(Args.user_id) .. ")"
+			local AsString = tostring(Args.user_id)
+			if AsString:match("[eE]") or Args.user_id ~= tonumber(AsString) or #AsString > 15 then
+				ErrorMessage = "User id too high for lua number precision (User id: " .. AsString .. ")"
 			else
 				local Headers, Response = StrafesNET.GetRobloxInfoFromUserId(Args.user_id)
 				if tonumber(Headers.code) < 400 then
 					UserInfo = Response
 				else
-					ErrorMessage = "Could not find user info from user id (" .. tostring(Args.user_id) .. ")"
+					ErrorMessage = "Could not find user info from user id (" .. AsString .. ")"
 				end
 			end
 		elseif Args.member then
