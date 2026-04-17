@@ -412,7 +412,11 @@ local function RunAudit(Guild, Cleanup, DryRun)
 	end
 
 	-- Cleanup: Roblox + Discord role management (when cleanup or dryrun = true)
-	if Cleanup or DryRun then
+	-- Skip live Roblox changes when the Discord guild is unreachable, otherwise the
+	-- Roblox and Discord role state would diverge until the next audit run.
+	if Cleanup and not DryRun and not Guild then
+		FinalText = FinalText .. "--- CLEANUP SKIPPED ---\nDiscord guild unreachable; Roblox role changes were not applied to keep state in sync.\n\n"
+	elseif Cleanup or DryRun then
 		local DryRunPrefix = DryRun and "[DRY RUN] " or ""
 
 		-- Roblox demotions (ineligible users)
