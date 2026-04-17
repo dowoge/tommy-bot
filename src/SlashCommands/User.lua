@@ -193,7 +193,7 @@ local function Callback(Interaction, Command, Args)
 	local _, BadgeRequest = StrafesNET.GetBadgesAwardedDates(Id, BhopBadges)
 	local BadgeData = type(BadgeRequest) == "table" and BadgeRequest.data or nil
 
-	local FirstBadge, FirstBadgeDate = 0, math.huge
+	local FirstBadge, FirstBadgeDate = nil, math.huge
 	if BadgeData then
 		for _, Badge in next, BadgeData do
 			local BadgeId = Badge.badgeId
