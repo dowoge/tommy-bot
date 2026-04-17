@@ -1,4 +1,3 @@
---I LOVE USELESS CLASSES!
 local Discordia = require('discordia')
 
 local ApplicationCommandOptionTypes = Discordia.enums.appCommandOptionType
@@ -16,7 +15,7 @@ end
 
 function SubCommandHandler:AddSubCommand(SubCommandName, SubCommandCallback)
 	if self.SubCommandCallbacks[SubCommandName] then
-		return print('no can do')
+		error("Sub-command '" .. SubCommandName .. "' is already registered")
 	end
 
 	self.SubCommandCallbacks[SubCommandName] = SubCommandCallback
@@ -33,6 +32,8 @@ function SubCommandHandler:GetMainCommandCallback()
 			local SubCommandArgs = Args[SubCommandName]
 			if SubCommandCallback then
 				SubCommandCallback(Interaction, Command, SubCommandArgs)
+			else
+				return Interaction:reply("Unknown sub-command: " .. SubCommandName, true)
 			end
 		end
 	end
