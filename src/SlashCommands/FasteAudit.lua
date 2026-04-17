@@ -1,5 +1,6 @@
 local SlashCommandTools = require('discordia-slash').util.tools()
 local StrafesNET = require('../Modules/StrafesNET.lua')
+local Owners = require('../Modules/Owners.lua')
 
 local FasteAuditCommand = SlashCommandTools.slashCommand('fasteaudit', 'Audits faste role members for world record eligibility')
 local CleanupOption = SlashCommandTools.boolean('cleanup', 'Perform Roblox and Discord role changes')
@@ -11,7 +12,7 @@ local GROUP_ID = "2607715"
 local MODE_ID = 0
 local AUTOHOP_WR_THRESHOLD = 10
 local OTHER_STYLE_WR_THRESHOLD = 50
-local ALLOWED_USER_ID = "697004725123416095"
+local ALLOWED_USER_ID = Owners.BotOwner
 local BHOP_SERVER_ID = "167423382697148416"
 local AUDIT_LOG_CHANNEL_ID = "1491857353174290565"
 local DISCORD_FASTE_ROLE_ID = "167799859309445120"

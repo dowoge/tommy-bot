@@ -4,6 +4,7 @@ local Discordia = require('discordia')
 local Date = Discordia.Date
 Discordia.extensions()
 local StrafesNET = require('../Modules/StrafesNET.lua')
+local Owners = require('../Modules/Owners.lua')
 
 local SafeNumberToString = StrafesNET.SafeNumberToString
 
@@ -64,10 +65,7 @@ local SortFunctions = {
     placement = PlacementSort
 }
 
-local AllowList = {
-    ["697004725123416095"] = true,
-    ["260016427900076033"] = true
-}
+local AllowList = Owners.Trusted
 
 local function Callback(Interaction, Command, Args)
     if not AllowList[Interaction.user.id] then

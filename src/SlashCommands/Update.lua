@@ -1,4 +1,5 @@
 local SlashCommandTools = require('discordia-slash').util.tools()
+local Owners = require('../Modules/Owners.lua')
 
 local UpdateCommand = SlashCommandTools.slashCommand('update', 'Updates the bot')
 
@@ -15,7 +16,7 @@ local START_FILE_TRANSLATIONS = {
 }
 
 local function Callback(Interaction, Command, Args)
-	if Interaction.user.id ~= "697004725123416095" then
+	if Interaction.user.id ~= Owners.BotOwner then
 		return Interaction:reply('You do not have permission to use this command.', true)
 	end
 
