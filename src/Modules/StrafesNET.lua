@@ -471,15 +471,18 @@ function StrafesNET.GetDiscordIdFromRobloxId(RobloxId)
 end
 
 function StrafesNET.GetUserOnlineStatus(UserId)
-    if not UserId then return 'empty id' end
+    if not UserId then return nil end
 
-    local Presence = Request("POST", ROBLOX_PRESENCE_URL .. "presence/users", { userIds = { UserId } }).userPresences
-        [1]
+    local _, PresenceBody = Request("POST", ROBLOX_PRESENCE_URL .. "presence/users", nil, nil, { userIds = { UserId } })
+    local Presence = PresenceBody and PresenceBody.userPresences and PresenceBody.userPresences[1]
+    if not Presence then return nil end
 
-    local LastOnline = Request("POST", ROBLOX_PRESENCE_URL .. "presence/last-online", { userIds = { UserId } })
-        .lastOnlineTimestamps[1]
+    local _, LastOnlineBody = Request("POST", ROBLOX_PRESENCE_URL .. "presence/last-online", nil, nil, { userIds = { UserId } })
+    local LastOnline = LastOnlineBody and LastOnlineBody.lastOnlineTimestamps and LastOnlineBody.lastOnlineTimestamps[1]
+    if LastOnline then
+        L1Copy(LastOnline, Presence)
+    end
 
-    L1Copy(LastOnline, Presence)
     return Presence
 end
 
