@@ -512,7 +512,7 @@ local function RunAudit(Guild, Cleanup, DryRun)
 			end
 
 			table.insert(DiscordChangeLines, string.format(
-				"Summary: %d users | %d multi-alt | +%d -%d (%d would-add %d would-remove) | %d failed | %d/%d already correct | %d no link | %d no in-guild alts",
+				"Summary: %d users | %d multi-alt | +%d -%d (%d would-add %d would-remove) | %d failed | %d already had / %d already lacked | %d no link | %d no in-guild alts",
 				Totals.UsersProcessed, Totals.MultiAltUsers,
 				Totals.Added, Totals.Removed, Totals.WouldAdd, Totals.WouldRemove,
 				Totals.Failed, Totals.AlreadyHad, Totals.AlreadyLacks,
