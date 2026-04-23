@@ -488,6 +488,7 @@ local function RunAudit(Guild, Cleanup, DryRun)
 			}
 
 			local EntryLines = {}
+			local ProcessedDiscordIds = {}
 			for _, Item in next, SyncQueue do
 				local Result = SyncDiscordRole(Guild, Item.Entry, Item.Action, DryRun)
 
@@ -502,6 +503,7 @@ local function RunAudit(Guild, Cleanup, DryRun)
 					end
 					for _, Alt in next, Result.InGuildAlts do
 						Totals[Alt.Outcome] = (Totals[Alt.Outcome] or 0) + 1
+						ProcessedDiscordIds[Alt.DiscordId] = true
 					end
 				end
 
@@ -511,12 +513,74 @@ local function RunAudit(Guild, Cleanup, DryRun)
 				end
 			end
 
+			-- Stale pass: Discord members with the faste role whose linked Roblox is no
+			-- longer in the faste group (e.g. manually demoted, left the group). These
+			-- never reach the Roblox-first SyncQueue above, so catch them here.
+			local StaleTotals = {
+				AlreadyProcessed = 0, NoLink = 0, LookupErr = 0,
+				InGroupSkipped = 0, Removed = 0, WouldRemove = 0, Failed = 0,
+			}
+			local FasteRole = Guild:getRole(DISCORD_FASTE_ROLE_ID)
+			if FasteRole then
+				local Candidates = {}
+				for Member in FasteRole.members:iter() do
+					if ProcessedDiscordIds[Member.user.id] then
+						StaleTotals.AlreadyProcessed = StaleTotals.AlreadyProcessed + 1
+					else
+						table.insert(Candidates, Member)
+					end
+				end
+
+				local StaleDryRunPrefix = DryRun and "[DRY RUN] " or ""
+				for _, Member in next, Candidates do
+					local DiscordId = Member.user.id
+					local Ok, Headers, Body = pcall(StrafesNET.GetRobloxInfoFromDiscordId, DiscordId)
+					local Code = Headers and tonumber(Headers.code)
+					if not Ok then
+						StaleTotals.LookupErr = StaleTotals.LookupErr + 1
+						table.insert(EntryLines, StaleDryRunPrefix .. "<@" .. DiscordId .. "> | Stale check lookup error: " .. tostring(Headers))
+					elseif Code == 404 or (Code == 200 and (not Body or not Body.id)) then
+						StaleTotals.NoLink = StaleTotals.NoLink + 1
+						table.insert(EntryLines, StaleDryRunPrefix .. "<@" .. DiscordId .. "> | Has faste role but no linked Roblox account")
+					elseif Code ~= 200 then
+						StaleTotals.LookupErr = StaleTotals.LookupErr + 1
+						table.insert(EntryLines, StaleDryRunPrefix .. "<@" .. DiscordId .. "> | Stale check lookup error: HTTP " .. tostring(Code))
+					else
+						local LinkedRobloxId = tostring(Body.id)
+						if ExistingRobloxIds[LinkedRobloxId] then
+							StaleTotals.InGroupSkipped = StaleTotals.InGroupSkipped + 1
+							table.insert(EntryLines, StaleDryRunPrefix .. "<@" .. DiscordId .. "> | Linked to in-group Roblox [" .. LinkedRobloxId .. "], skipped stale removal")
+						else
+							local LinkedLabel = (Body.name or LinkedRobloxId) .. " [" .. LinkedRobloxId .. "]"
+							if DryRun then
+								StaleTotals.WouldRemove = StaleTotals.WouldRemove + 1
+								table.insert(EntryLines, StaleDryRunPrefix .. "<@" .. DiscordId .. "> | Would remove stale faste role (linked to " .. LinkedLabel .. ")")
+							else
+								local Success, ErrMsg = ApplyRoleChange(Member, "removeRole", "Remove failed")
+								if Success then
+									StaleTotals.Removed = StaleTotals.Removed + 1
+									table.insert(EntryLines, "<@" .. DiscordId .. "> | Removed stale faste role (linked to " .. LinkedLabel .. ")")
+								else
+									StaleTotals.Failed = StaleTotals.Failed + 1
+									table.insert(EntryLines, "<@" .. DiscordId .. "> | Stale removal failed: " .. tostring(ErrMsg))
+								end
+							end
+						end
+					end
+				end
+			end
+
 			table.insert(DiscordChangeLines, string.format(
 				"Summary: %d users | %d multi-alt | +%d -%d (%d would-add %d would-remove) | %d failed | %d already had / %d already lacked | %d no link | %d no in-guild alts",
 				Totals.UsersProcessed, Totals.MultiAltUsers,
 				Totals.Added, Totals.Removed, Totals.WouldAdd, Totals.WouldRemove,
 				Totals.Failed, Totals.AlreadyHad, Totals.AlreadyLacks,
 				Totals.NoLinkUsers, Totals.NoInGuildUsers
+			))
+			table.insert(DiscordChangeLines, string.format(
+				"Stale pass: %d skipped (processed) | %d no-link | %d lookup-err | %d in-group skipped | %d removed | %d would-remove | %d failed",
+				StaleTotals.AlreadyProcessed, StaleTotals.NoLink, StaleTotals.LookupErr,
+				StaleTotals.InGroupSkipped, StaleTotals.Removed, StaleTotals.WouldRemove, StaleTotals.Failed
 			))
 			for _, Line in next, EntryLines do
 				table.insert(DiscordChangeLines, Line)
