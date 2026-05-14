@@ -562,14 +562,22 @@ function StrafesNET.GetUserGroups(UserId)
     return Request("GET", RequestUrl, {CacheTTL = 60 * 60})
 end
 
-function StrafesNET.UpdateGroupMemberRole(GroupId, UserId, RoleId)
-    local Url = ROBLOX_OPEN_CLOUD_URL .. "groups/" .. GroupId .. "/memberships/" .. UserId
+local function RoleMembershipRequest(GroupId, UserId, RoleId, Action)
+    local Url = ROBLOX_OPEN_CLOUD_URL .. "groups/" .. GroupId .. "/memberships/" .. UserId .. ":" .. Action
     local OpenCloudHeaders = {
         ["x-api-key"] = APIKeys.RobloxOpenCloud,
         ["Content-Type"] = "application/json"
     }
     local Body = { role = "groups/" .. GroupId .. "/roles/" .. RoleId }
-    return Request("PATCH", Url, nil, OpenCloudHeaders, Body, {NoCache = true, MaxRetries = 1})
+    return Request("POST", Url, nil, OpenCloudHeaders, Body, {NoCache = true, MaxRetries = 1})
+end
+
+function StrafesNET.AssignGroupRole(GroupId, UserId, RoleId)
+    return RoleMembershipRequest(GroupId, UserId, RoleId, "assignRole")
+end
+
+function StrafesNET.UnassignGroupRole(GroupId, UserId, RoleId)
+    return RoleMembershipRequest(GroupId, UserId, RoleId, "unassignRole")
 end
 
 function StrafesNET.GetRecentWorldRecords(Page)

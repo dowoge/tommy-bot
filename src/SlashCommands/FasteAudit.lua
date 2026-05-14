@@ -32,23 +32,12 @@ local function GetFasteRoleId()
 	if not Body or not Body.roles then
 		error("Failed to fetch group roles (HTTP " .. tostring(Headers and Headers.code) .. ")")
 	end
-	local FasteId, FasteRank
-	local BhopperRoleId
 	for _, Role in next, Body.roles do
-		if Role.name then
-			local LoweredName = Role.name:lower()
-			if LoweredName == "faste" then
-				FasteId = Role.id
-				FasteRank = tonumber(Role.rank)
-			elseif LoweredName == "bhopper" then
-				BhopperRoleId = Role.id
-			end
+		if Role.name and Role.name:lower() == "faste" then
+			return Role.id
 		end
 	end
-	if not FasteId then
-		error("Could not find the 'faste' role in group " .. GROUP_ID)
-	end
-	return FasteId, FasteRank, BhopperRoleId
+	error("Could not find the 'faste' role in group " .. GROUP_ID)
 end
 
 local VALID_GAME_IDS = {
@@ -229,7 +218,7 @@ local function FormatDiscordRoleResult(Result, DryRun)
 end
 
 local function RunAudit(Guild, Cleanup, DryRun)
-	local RoleSetId, FasteRoleRank, BhopperRoleId = GetFasteRoleId()
+	local RoleSetId = GetFasteRoleId()
 	local Members = StrafesNET.GetAllGroupRoleMembers(GROUP_ID, RoleSetId)
 
 	if #Members == 0 then
@@ -358,17 +347,12 @@ local function RunAudit(Guild, Cleanup, DryRun)
 						EligibilityReason = EligibilityReason
 					}
 
-					-- Check group membership
 					local GroupOk, _, GroupBody = pcall(StrafesNET.GetUserGroups, CandidateId)
 					local InGroup = false
-					local GroupRoleRank = nil
-					local GroupRoleName = nil
 					if GroupOk and GroupBody and GroupBody.data then
 						for _, GroupEntry in next, GroupBody.data do
 							if GroupEntry.group and tostring(GroupEntry.group.id) == GROUP_ID then
 								InGroup = true
-								GroupRoleRank = GroupEntry.role and tonumber(GroupEntry.role.rank)
-								GroupRoleName = GroupEntry.role and GroupEntry.role.name
 								break
 							end
 						end
@@ -376,9 +360,6 @@ local function RunAudit(Guild, Cleanup, DryRun)
 
 					if not InGroup then
 						Entry.UnavailableReason = "Not in group"
-						table.insert(UnavailableLines, Entry)
-					elseif GroupRoleRank and FasteRoleRank and GroupRoleRank > FasteRoleRank then
-						Entry.UnavailableReason = "Higher role: " .. (GroupRoleName or "Unknown")
 						table.insert(UnavailableLines, Entry)
 					else
 						table.insert(DiscoveryLines, Entry)
@@ -415,42 +396,37 @@ local function RunAudit(Guild, Cleanup, DryRun)
 	elseif Cleanup or DryRun then
 		local DryRunPrefix = DryRun and "[DRY RUN] " or ""
 
-		-- Roblox demotions (ineligible users)
+		-- Roblox role changes: remove faste from ineligible, add faste to eligible candidates.
+		-- Roblox supports multiple roles per member, so we add/remove the faste role
+		-- without disturbing any other roles the user holds (e.g. moderator).
 		local RobloxChangeLines = {}
-		if not BhopperRoleId then
-			if #IneligibleLines > 0 then
-				table.insert(RobloxChangeLines, "Could not find the 'bhopper' role in group " .. GROUP_ID .. "; " .. #IneligibleLines .. " ineligible user(s) not demoted.")
-			end
-		else
-			for _, Entry in next, IneligibleLines do
-				local UserPrefix = Entry.DisplayName .. " (@" .. Entry.Username .. ") [" .. Entry.UserId .. "]"
-				if DryRun then
-					table.insert(RobloxChangeLines, DryRunPrefix .. UserPrefix .. " | Would demote to Bhopper")
+		for _, Entry in next, IneligibleLines do
+			local UserPrefix = Entry.DisplayName .. " (@" .. Entry.Username .. ") [" .. Entry.UserId .. "]"
+			if DryRun then
+				table.insert(RobloxChangeLines, DryRunPrefix .. UserPrefix .. " | Would remove faste role")
+			else
+				local Ok, Headers = pcall(StrafesNET.UnassignGroupRole, GROUP_ID, Entry.UserId, tostring(RoleSetId))
+				if Ok and Headers and tonumber(Headers.code) and tonumber(Headers.code) < 400 then
+					table.insert(RobloxChangeLines, UserPrefix .. " | Removed faste role")
 				else
-					local Ok, Headers = pcall(StrafesNET.UpdateGroupMemberRole, GROUP_ID, Entry.UserId, tostring(BhopperRoleId))
-					if Ok and Headers and tonumber(Headers.code) and tonumber(Headers.code) < 400 then
-						table.insert(RobloxChangeLines, UserPrefix .. " | Demoted to Bhopper")
-					else
-						local ErrMsg = Ok and ("HTTP " .. tostring(Headers.code)) or tostring(Headers)
-						table.insert(RobloxChangeLines, UserPrefix .. " | Demotion failed: " .. ErrMsg)
-					end
+					local ErrMsg = Ok and ("HTTP " .. tostring(Headers.code)) or tostring(Headers)
+					table.insert(RobloxChangeLines, UserPrefix .. " | Faste removal failed: " .. ErrMsg)
 				end
 			end
 		end
 
-		-- Roblox promotions (eligible discovered candidates in group with lower role)
 		if not DiscoveryFailed then
 			for _, Entry in next, DiscoveryLines do
 				local UserPrefix = Entry.DisplayName .. " (@" .. Entry.Username .. ") [" .. Entry.UserId .. "]"
 				if DryRun then
-					table.insert(RobloxChangeLines, DryRunPrefix .. UserPrefix .. " | Would promote to Faste")
+					table.insert(RobloxChangeLines, DryRunPrefix .. UserPrefix .. " | Would add faste role")
 				else
-					local Ok, Headers = pcall(StrafesNET.UpdateGroupMemberRole, GROUP_ID, Entry.UserId, tostring(RoleSetId))
+					local Ok, Headers = pcall(StrafesNET.AssignGroupRole, GROUP_ID, Entry.UserId, tostring(RoleSetId))
 					if Ok and Headers and tonumber(Headers.code) and tonumber(Headers.code) < 400 then
-						table.insert(RobloxChangeLines, UserPrefix .. " | Promoted to Faste")
+						table.insert(RobloxChangeLines, UserPrefix .. " | Added faste role")
 					else
 						local ErrMsg = Ok and ("HTTP " .. tostring(Headers.code)) or tostring(Headers)
-						table.insert(RobloxChangeLines, UserPrefix .. " | Promotion failed: " .. ErrMsg)
+						table.insert(RobloxChangeLines, UserPrefix .. " | Faste add failed: " .. ErrMsg)
 					end
 				end
 			end
