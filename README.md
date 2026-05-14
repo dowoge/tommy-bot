@@ -9,12 +9,16 @@
 return "bot.token"
 ```
 
-3. `APIKeys.lua` should contain any other external API key. Currently only the following are required:
+3. `APIKeys.lua` should contain any other external API key. Currently the following are supported:
 ```lua
 return {
-    StrafesNET = "strafes_aabbcc"
+    StrafesNET = "strafes_aabbcc",
+    RobloxOpenCloud = "open_cloud_api_key", -- used for group role updates
+    RobloxCookie = ".ROBLOSECURITY value here" -- required for badge awarded-date lookups
 }
 ```
+
+`RobloxCookie` is the raw `.ROBLOSECURITY` cookie value (no `.ROBLOSECURITY=` prefix). It is only sent on Roblox badge requests; never log or share it.
 
 4. `RankConstants.lua` should contain the magic constants used for rank point calculation.
 ```lua

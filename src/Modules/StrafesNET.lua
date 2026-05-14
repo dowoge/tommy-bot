@@ -494,8 +494,12 @@ end
 
 function StrafesNET.GetBadgesAwardedDates(UserId, BadgeList)
     if not UserId then return 'empty id' end
+    local BadgeHeaders = nil
+    if APIKeys.RobloxCookie then
+        BadgeHeaders = { Cookie = ".ROBLOSECURITY=" .. APIKeys.RobloxCookie }
+    end
     return Request("GET", ROBLOX_BADGES_API .. "users/" .. UserId .. "/badges/awarded-dates",
-        { badgeIds = table.concat(BadgeList, ",") }, {CacheTTL = 60 * 60 * 24 * 365})
+        { badgeIds = table.concat(BadgeList, ",") }, BadgeHeaders, {CacheTTL = 60 * 60 * 24 * 365})
 end
 
 function StrafesNET.GetVerificationItemId(UserId)

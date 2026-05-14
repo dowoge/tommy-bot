@@ -14,6 +14,7 @@ const FORWARDED_HEADERS = [
 	"content-length",
 	"accept",
 	"x-api-key",
+	"cookie",
 ];
 
 export default {
