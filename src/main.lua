@@ -62,8 +62,13 @@ Client:on('ready', function()
         end)()
     end
 
-    local SecondsUntilNextUtcMidnight = 86400 - (os.time() % 86400)
-    Timer.setTimeout(SecondsUntilNextUtcMidnight * 1000, function()
+    local TargetSecondOfDay = 20 * 3600
+    local SecondsSinceUtcMidnight = os.time() % 86400
+    local SecondsUntilNextRun = (TargetSecondOfDay - SecondsSinceUtcMidnight) % 86400
+    if SecondsUntilNextRun == 0 then
+        SecondsUntilNextRun = 86400
+    end
+    Timer.setTimeout(SecondsUntilNextRun * 1000, function()
         RunScheduledAudit()
         Timer.setInterval(24 * 60 * 60 * 1000, RunScheduledAudit)
     end)
