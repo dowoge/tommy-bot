@@ -863,6 +863,12 @@ local function Request(Method, Url, Params, RequestHeaders, RequestBody, Callbac
                     return Headers, DecodedBody
                 end
 
+                -- 4xx (except 408 timeout / 429 rate-limit) won't change on retry
+                if ResponseCode and ResponseCode >= 400 and ResponseCode < 500
+                    and ResponseCode ~= 408 and ResponseCode ~= 429 then
+                    return Headers, TryDecodeJson(Body)
+                end
+
                 Attempt = Attempt + 1
                 if Attempt > MaxRetries then
                     return Headers, TryDecodeJson(Body)
