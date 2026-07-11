@@ -47,6 +47,7 @@ end
 local CacheStore = {}
 local CacheFilePath = "./HTTPCache.json"
 local CacheSaveIntervalSeconds = 300
+local MaxRateLimitWaitSeconds = 120
 local LastCacheSaveAt = 0
 local CacheSavePendingTimer = nil
 local RateLimitState = {
@@ -511,6 +512,10 @@ local function EnforceRateLimit(Domain, Options)
     end
 
     local WaitSeconds = math.max(GetWait(Server), GetWait(Custom), GetWindowWait(Server and Server.Windows))
+    if WaitSeconds > MaxRateLimitWaitSeconds then
+        error("[HTTP] Rate limited on " .. Domain .. " for another " .. WaitSeconds ..
+            " seconds (over the " .. MaxRateLimitWaitSeconds .. "s cap), failing fast")
+    end
     if WaitSeconds > 0 then
         Timer.sleep(WaitSeconds * 1000)
     end
@@ -844,6 +849,9 @@ local function Request(Method, Url, Params, RequestHeaders, RequestBody, Callbac
             if ResponseCode == 429 and Attempt < MaxRetries then
                 MarkRateLimited(Domain, Headers)
                 local WaitSeconds = GetRateLimitWaitSeconds(Domain, Headers)
+                if WaitSeconds and WaitSeconds > MaxRateLimitWaitSeconds then
+                    return Headers, TryDecodeJson(Body)
+                end
                 if WaitSeconds and WaitSeconds > 0 then
                     DebugPrint("Rate limited, retrying in " .. WaitSeconds .. " seconds...")
                     Timer.sleep(WaitSeconds * 1000)
