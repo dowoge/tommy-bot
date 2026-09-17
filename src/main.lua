@@ -72,7 +72,7 @@ Client:on('ready', function()
         RunScheduledAudit()
         Timer.setInterval(24 * 60 * 60 * 1000, RunScheduledAudit)
     end)
-    RunScheduledAudit()
+    -- RunScheduledAudit()
 end)
 
 local function RunCallback(Callback, Interaction, Command, Args)
